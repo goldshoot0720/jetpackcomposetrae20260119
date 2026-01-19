@@ -20,6 +20,7 @@ fun SubscriptionScreen(
 ) {
     val subscriptions by viewModel.subscriptions.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    var showAddDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -30,6 +31,11 @@ fun SubscriptionScreen(
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showAddDialog = true }) {
+                Text("+", style = MaterialTheme.typography.titleLarge)
+            }
         }
     ) { padding ->
         Box(
@@ -57,7 +63,61 @@ fun SubscriptionScreen(
                 }
             }
         }
+        
+        if (showAddDialog) {
+            AddSubscriptionDialog(
+                onDismiss = { showAddDialog = false },
+                onConfirm = { name, price, date ->
+                    viewModel.addSubscription(name, price, date)
+                    showAddDialog = false
+                }
+            )
+        }
     }
+}
+
+@Composable
+fun AddSubscriptionDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, Int, String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var price by remember { mutableStateOf("") }
+    var date by remember { mutableStateOf(java.time.LocalDate.now().plusMonths(1).toString() + "T00:00:00.000+00:00") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add Subscription") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") }
+                )
+                OutlinedTextField(
+                    value = price,
+                    onValueChange = { price = it },
+                    label = { Text("Price") }
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val priceInt = price.toIntOrNull() ?: 0
+                    onConfirm(name, priceInt, date)
+                }
+            ) {
+                Text("Add")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable

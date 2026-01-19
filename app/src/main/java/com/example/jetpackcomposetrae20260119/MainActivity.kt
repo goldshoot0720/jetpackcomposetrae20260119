@@ -19,6 +19,7 @@ import com.example.jetpackcomposetrae20260119.ui.SubscriptionScreen
 import com.example.jetpackcomposetrae20260119.ui.SubscriptionViewModel
 import com.example.jetpackcomposetrae20260119.ui.theme.Jetpackcomposetrae20260119Theme
 import com.example.jetpackcomposetrae20260119.worker.NotificationWorker
+import com.example.jetpackcomposetrae20260119.worker.WorkerScheduler
 
 class MainActivity : ComponentActivity() {
     private val viewModel: SubscriptionViewModel by viewModels()
@@ -36,6 +37,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         checkPermissionsAndNotify()
+        WorkerScheduler.scheduleDailyCheck(this)
 
         setContent {
             Jetpackcomposetrae20260119Theme {

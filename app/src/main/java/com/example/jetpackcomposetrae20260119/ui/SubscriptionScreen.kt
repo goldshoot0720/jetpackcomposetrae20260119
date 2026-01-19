@@ -3,6 +3,8 @@ package com.example.jetpackcomposetrae20260119.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -67,8 +69,8 @@ fun SubscriptionScreen(
         if (showAddDialog) {
             AddSubscriptionDialog(
                 onDismiss = { showAddDialog = false },
-                onConfirm = { name, price, date ->
-                    viewModel.addSubscription(name, price, date)
+                onConfirm = { name, price, date, site, note, account ->
+                    viewModel.addSubscription(name, price, date, site, note, account)
                     showAddDialog = false
                 }
             )
@@ -79,26 +81,59 @@ fun SubscriptionScreen(
 @Composable
 fun AddSubscriptionDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, Int, String) -> Unit
+    onConfirm: (String, Int, String, String, String, String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf(java.time.LocalDate.now().plusMonths(1).toString() + "T00:00:00.000+00:00") }
+    var site by remember { mutableStateOf("") }
+    var note by remember { mutableStateOf("") }
+    var account by remember { mutableStateOf("") }
+    var date by remember { mutableStateOf(java.time.LocalDate.now().plusMonths(1).toString()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add Subscription") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name") }
+                    label = { Text("Name") },
+                    singleLine = true
                 )
                 OutlinedTextField(
                     value = price,
                     onValueChange = { price = it },
-                    label = { Text("Price") }
+                    label = { Text("Price") },
+                    singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                )
+                OutlinedTextField(
+                    value = date,
+                    onValueChange = { date = it },
+                    label = { Text("Next Date (YYYY-MM-DD)") },
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = site,
+                    onValueChange = { site = it },
+                    label = { Text("Site (URL)") },
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = account,
+                    onValueChange = { account = it },
+                    label = { Text("Account") },
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text("Note") },
+                    minLines = 3
                 )
             }
         },
@@ -106,7 +141,9 @@ fun AddSubscriptionDialog(
             Button(
                 onClick = {
                     val priceInt = price.toIntOrNull() ?: 0
-                    onConfirm(name, priceInt, date)
+                    // Append time to date to make it ISO-like if it's just a date
+                    val fullDate = if (date.contains("T")) date else "${date}T00:00:00.000+00:00"
+                    onConfirm(name, priceInt, fullDate, site, note, account)
                 }
             ) {
                 Text("Add")
@@ -161,11 +198,27 @@ fun SubscriptionItem(subscription: Subscription) {
                 style = MaterialTheme.typography.bodyMedium
             )
             
+            if (subscription.account.isNotEmpty()) {
+                Text(
+                    text = "Account: ${subscription.account}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
             if (subscription.site.isNotEmpty()) {
                 Text(
                     text = subscription.site,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.secondary
+                )
+            }
+            
+            if (subscription.note.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Note: ${subscription.note}",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
                 )
             }
         }

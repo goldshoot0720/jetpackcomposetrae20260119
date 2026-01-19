@@ -20,7 +20,14 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     init {
+        checkConnectivity()
         loadSubscriptions()
+    }
+
+    private fun checkConnectivity() {
+        viewModelScope.launch {
+            repository.ping()
+        }
     }
 
     fun loadSubscriptions() {

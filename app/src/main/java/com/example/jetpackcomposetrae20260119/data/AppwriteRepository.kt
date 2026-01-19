@@ -83,4 +83,13 @@ class AppwriteRepository(context: Context) {
             emptyList()
         }
     }
+
+    suspend fun ping() = withContext(Dispatchers.IO) {
+        try {
+            client.ping()
+            Log.d("AppwriteRepository", "Ping successful")
+        } catch (e: Exception) {
+            Log.e("AppwriteRepository", "Ping failed", e)
+        }
+    }
 }

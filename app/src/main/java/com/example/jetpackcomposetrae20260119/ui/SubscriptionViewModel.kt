@@ -1,0 +1,33 @@
+package com.example.jetpackcomposetrae20260119.ui
+
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.jetpackcomposetrae20260119.data.AppwriteRepository
+import com.example.jetpackcomposetrae20260119.data.Subscription
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+class SubscriptionViewModel(application: Application) : AndroidViewModel(application) {
+    private val repository = AppwriteRepository(application)
+    
+    private val _subscriptions = MutableStateFlow<List<Subscription>>(emptyList())
+    val subscriptions: StateFlow<List<Subscription>> = _subscriptions.asStateFlow()
+    
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    init {
+        loadSubscriptions()
+    }
+
+    fun loadSubscriptions() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _subscriptions.value = repository.getSubscriptions()
+            _isLoading.value = false
+        }
+    }
+}

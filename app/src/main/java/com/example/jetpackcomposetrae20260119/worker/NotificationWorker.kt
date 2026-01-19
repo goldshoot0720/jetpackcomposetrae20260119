@@ -14,6 +14,9 @@ import androidx.work.WorkerParameters
 import com.example.jetpackcomposetrae20260119.R
 import com.example.jetpackcomposetrae20260119.data.AppwriteRepository
 
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
 class NotificationWorker(
     context: Context,
     workerParams: WorkerParameters
@@ -24,8 +27,16 @@ class NotificationWorker(
         val upcoming = repository.getUpcomingSubscriptions(3)
 
         if (upcoming.isNotEmpty()) {
-            val names = upcoming.joinToString(", ") { it.name }
-            showNotification("Upcoming Subscriptions", "Renewing soon: $names")
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+            val content = upcoming.joinToString("\n") { sub ->
+                val dateStr = try {
+                    ZonedDateTime.parse(sub.nextDate).format(formatter)
+                } catch (e: Exception) {
+                    sub.nextDate.take(10) // Fallback to first 10 chars if parse fails
+                }
+                "${sub.name} ($dateStr)"
+            }
+            showNotification("Upcoming Subscriptions", "Renewing soon:\n$content")
         }
 
         return Result.success()

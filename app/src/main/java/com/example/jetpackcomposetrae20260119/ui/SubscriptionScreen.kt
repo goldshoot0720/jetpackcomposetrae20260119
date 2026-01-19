@@ -22,7 +22,6 @@ fun SubscriptionScreen(
 ) {
     val subscriptions by viewModel.subscriptions.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-    var showAddDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -33,11 +32,6 @@ fun SubscriptionScreen(
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }) {
-                Text("+", style = MaterialTheme.typography.titleLarge)
-            }
         }
     ) { padding ->
         Box(
@@ -65,96 +59,7 @@ fun SubscriptionScreen(
                 }
             }
         }
-        
-        if (showAddDialog) {
-            AddSubscriptionDialog(
-                onDismiss = { showAddDialog = false },
-                onConfirm = { name, price, date, site, note, account ->
-                    viewModel.addSubscription(name, price, date, site, note, account)
-                    showAddDialog = false
-                }
-            )
-        }
     }
-}
-
-@Composable
-fun AddSubscriptionDialog(
-    onDismiss: () -> Unit,
-    onConfirm: (String, Int, String, String, String, String) -> Unit
-) {
-    var name by remember { mutableStateOf("") }
-    var price by remember { mutableStateOf("") }
-    var site by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("") }
-    var account by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf(java.time.LocalDate.now().plusMonths(1).toString()) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Add Subscription") },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.verticalScroll(rememberScrollState())
-            ) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Name") },
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = price,
-                    onValueChange = { price = it },
-                    label = { Text("Price") },
-                    singleLine = true,
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
-                )
-                OutlinedTextField(
-                    value = date,
-                    onValueChange = { date = it },
-                    label = { Text("Next Date (YYYY-MM-DD)") },
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = site,
-                    onValueChange = { site = it },
-                    label = { Text("Site (URL)") },
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = account,
-                    onValueChange = { account = it },
-                    label = { Text("Account") },
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = note,
-                    onValueChange = { note = it },
-                    label = { Text("Note") },
-                    minLines = 3
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val priceInt = price.toIntOrNull() ?: 0
-                    // Append time to date to make it ISO-like if it's just a date
-                    val fullDate = if (date.contains("T")) date else "${date}T00:00:00.000+00:00"
-                    onConfirm(name, priceInt, fullDate, site, note, account)
-                }
-            ) {
-                Text("Add")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
 }
 
 @Composable

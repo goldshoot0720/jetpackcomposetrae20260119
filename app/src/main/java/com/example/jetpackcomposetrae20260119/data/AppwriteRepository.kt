@@ -11,6 +11,8 @@ import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
+import android.util.Log
+
 class AppwriteRepository(context: Context) {
     private val client = Client(context)
         .setEndpoint(Constants.ENDPOINT)
@@ -21,6 +23,7 @@ class AppwriteRepository(context: Context) {
 
     suspend fun getSubscriptions(): List<Subscription> = withContext(Dispatchers.IO) {
         try {
+            Log.d("AppwriteRepository", "Fetching subscriptions...")
             val response = databases.listDocuments(
                 databaseId = Constants.DATABASE_ID,
                 collectionId = Constants.SUBSCRIPTION_COLLECTION_ID,
@@ -28,8 +31,13 @@ class AppwriteRepository(context: Context) {
                     Query.orderAsc("nextdate")
                 )
             )
-            response.documents.map { Subscription.fromDocument(it) }
+            Log.d("AppwriteRepository", "Fetched ${response.documents.size} documents")
+            response.documents.map { doc ->
+                Log.d("AppwriteRepository", "Document: ${doc.data}")
+                Subscription.fromDocument(doc) 
+            }
         } catch (e: Exception) {
+            Log.e("AppwriteRepository", "Error fetching subscriptions", e)
             e.printStackTrace()
             emptyList()
         }
@@ -37,13 +45,16 @@ class AppwriteRepository(context: Context) {
 
     suspend fun addSubscription(subscription: Subscription) = withContext(Dispatchers.IO) {
         try {
+            Log.d("AppwriteRepository", "Adding subscription: ${subscription.name}")
             databases.createDocument(
                 databaseId = Constants.DATABASE_ID,
                 collectionId = Constants.SUBSCRIPTION_COLLECTION_ID,
                 documentId = ID.unique(),
                 data = Subscription.toMap(subscription)
             )
+            Log.d("AppwriteRepository", "Subscription added successfully")
         } catch (e: Exception) {
+            Log.e("AppwriteRepository", "Error adding subscription", e)
             e.printStackTrace()
             throw e
         }

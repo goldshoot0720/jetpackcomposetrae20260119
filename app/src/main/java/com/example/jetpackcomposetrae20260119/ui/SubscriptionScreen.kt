@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -66,9 +67,7 @@ fun SubscriptionScreen(
                     .fillMaxWidth()
                     .background(
                         brush = Brush.linearGradient(
-                            colors = listOf(GradientStart, GradientEnd),
-                            start = Offset(0f, 0f),
-                            end = Offset(Float.MAX_VALUE, Float.MAX_VALUE)
+                            colors = listOf(GradientStart, GradientEnd)
                         )
                     )
                     .statusBarsPadding()
@@ -297,11 +296,14 @@ fun SubscriptionItem(subscription: Subscription) {
             .fillMaxWidth()
             .shadow(
                 elevation = if (isUrgent) 8.dp else 3.dp,
-                shape = RoundedCornerShape(16.dp),
-                ambientColor = if (isUrgent) AccentRed.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.08f)
+                shape = RoundedCornerShape(16.dp)
             )
     ) {
-        Row(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min)
+        ) {
             // Left accent bar
             if (borderColor != Color.Transparent) {
                 Box(
@@ -332,11 +334,7 @@ fun SubscriptionItem(subscription: Subscription) {
                             modifier = Modifier
                                 .size(10.dp)
                                 .clip(CircleShape)
-                                .background(
-                                    brush = Brush.linearGradient(
-                                        colors = listOf(GradientStart, GradientEnd)
-                                    )
-                                )
+                                .background(GradientStart)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(

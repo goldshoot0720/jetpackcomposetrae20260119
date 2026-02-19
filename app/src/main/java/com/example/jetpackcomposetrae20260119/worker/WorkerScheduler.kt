@@ -25,7 +25,7 @@ object WorkerScheduler {
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             "SubscriptionCheck",
-            ExistingPeriodicWorkPolicy.UPDATE,
+            ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
             workRequest
         )
     }

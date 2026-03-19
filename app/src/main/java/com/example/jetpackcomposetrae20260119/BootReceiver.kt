@@ -6,6 +6,7 @@ import android.content.Intent
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.jetpackcomposetrae20260119.worker.NotificationWorker
+import com.example.jetpackcomposetrae20260119.worker.OilPriceWorker
 import com.example.jetpackcomposetrae20260119.worker.WorkerScheduler
 
 class BootReceiver : BroadcastReceiver() {
@@ -13,10 +14,14 @@ class BootReceiver : BroadcastReceiver() {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
             // Only schedule background worker, do NOT launch the app UI
             WorkerScheduler.scheduleDailyCheck(context)
+            WorkerScheduler.scheduleDailyOilFetch(context)
 
             // Also trigger an immediate check in background (no app launch needed)
             val immediateCheck = OneTimeWorkRequestBuilder<NotificationWorker>().build()
             WorkManager.getInstance(context).enqueue(immediateCheck)
+
+            val immediateOilRefresh = OneTimeWorkRequestBuilder<OilPriceWorker>().build()
+            WorkManager.getInstance(context).enqueue(immediateOilRefresh)
         }
     }
 }

@@ -11,14 +11,7 @@ import java.util.concurrent.TimeUnit
 
 object WorkerScheduler {
     fun scheduleDailyCheck(context: Context) {
-        val now = LocalDateTime.now()
-        var nextRun = now.with(LocalTime.of(6, 0))
-        if (now.isAfter(nextRun)) {
-            nextRun = nextRun.plusDays(1)
-        }
-
-        val initialDelay = ChronoUnit.MILLIS.between(now, nextRun)
-
+        val initialDelay = computeInitialDelay(LocalTime.of(6, 0))
         val workRequest = PeriodicWorkRequestBuilder<NotificationWorker>(24, TimeUnit.HOURS)
             .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
             .build()
@@ -28,5 +21,28 @@ object WorkerScheduler {
             ExistingPeriodicWorkPolicy.KEEP,
             workRequest
         )
+    }
+
+    fun scheduleDailyOilFetch(context: Context) {
+        val initialDelay = computeInitialDelay(LocalTime.of(13, 0))
+        val workRequest = PeriodicWorkRequestBuilder<OilPriceWorker>(24, TimeUnit.HOURS)
+            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "OilPriceFetch",
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
+    }
+
+    private fun computeInitialDelay(runAt: LocalTime): Long {
+        val now = LocalDateTime.now()
+        var nextRun = now.with(runAt)
+        if (now.isAfter(nextRun)) {
+            nextRun = nextRun.plusDays(1)
+        }
+
+        return ChronoUnit.MILLIS.between(now, nextRun)
     }
 }

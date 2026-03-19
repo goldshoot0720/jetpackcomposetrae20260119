@@ -6,4 +6,5 @@ object Constants {
     const val DATABASE_ID = "69821743002139037da1"
     const val FOOD_COLLECTION_NAME = "food"
     const val SUBSCRIPTION_COLLECTION_NAME = "subscription"
+    const val OIL_PRICE_URL = "https://www.gulfmerc.com/"
 }

@@ -9,7 +9,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
 import android.util.Log
 
@@ -20,10 +19,45 @@ class AppwriteRepository(context: Context) {
         .setSelfSigned(true)
 
     private val databases = Databases(client)
+    private val collectionIdCache = mutableMapOf<String, String>()
+
+    @Suppress("UNCHECKED_CAST")
+    private suspend fun listCollections(): List<Map<String, Any>> {
+        val response = client.call(
+            "GET",
+            "/databases/${Constants.DATABASE_ID}/collections",
+            headers = emptyMap(),
+            params = emptyMap(),
+            responseType = Map::class.java,
+            converter = { it as Map<String, Any> }
+        ) as Map<String, Any>
+
+        return response["collections"] as? List<Map<String, Any>>
+            ?: throw IllegalStateException("Collections response did not include a collections list")
+    }
+
+    private suspend fun resolveCollectionId(collectionName: String): String {
+        collectionIdCache[collectionName]?.let { return it }
+
+        val collection = listCollections().firstOrNull {
+            it["name"] == collectionName
+        }
+            ?: throw IllegalStateException(
+                "Collection named $collectionName was not found"
+            )
+
+        val collectionId = collection["\$id"] as? String
+            ?: throw IllegalStateException(
+                "Collection named $collectionName did not include a \$id"
+            )
+
+        return collectionId.also { collectionIdCache[collectionName] = it }
+    }
 
     suspend fun getSubscriptions(): List<Subscription> = withContext(Dispatchers.IO) {
         try {
             Log.d("AppwriteRepository", "Fetching subscriptions with pagination...")
+            val subscriptionCollectionId = resolveCollectionId(Constants.SUBSCRIPTION_COLLECTION_NAME)
             val allSubscriptions = mutableListOf<Subscription>()
             var offset = 0
             val limit = 100
@@ -31,7 +65,7 @@ class AppwriteRepository(context: Context) {
             while (true) {
                 val response = databases.listDocuments(
                     databaseId = Constants.DATABASE_ID,
-                    collectionId = Constants.SUBSCRIPTION_COLLECTION_ID,
+                    collectionId = subscriptionCollectionId,
                     queries = listOf(
                         Query.orderAsc("nextdate"),
                         Query.limit(limit),
@@ -60,9 +94,10 @@ class AppwriteRepository(context: Context) {
     suspend fun addSubscription(subscription: Subscription) = withContext(Dispatchers.IO) {
         try {
             Log.d("AppwriteRepository", "Adding subscription: ${subscription.name}")
+            val subscriptionCollectionId = resolveCollectionId(Constants.SUBSCRIPTION_COLLECTION_NAME)
             databases.createDocument(
                 databaseId = Constants.DATABASE_ID,
-                collectionId = Constants.SUBSCRIPTION_COLLECTION_ID,
+                collectionId = subscriptionCollectionId,
                 documentId = ID.unique(),
                 data = Subscription.toMap(subscription)
             )

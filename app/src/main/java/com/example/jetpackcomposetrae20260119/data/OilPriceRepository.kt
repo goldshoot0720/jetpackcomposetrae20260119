@@ -72,14 +72,41 @@ class OilPriceRepository(context: Context) {
     }
 
     private fun parseLatestPoint(html: String): OilPricePoint? {
-        val regex = Regex(
+        val normalized = html
+            .replace("&nbsp;", " ")
+            .replace(Regex("<[^>]+>"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+
+        val sentenceMatch = Regex(
             pattern = """OQD(?:\s+Daily)?\s+Marker Price\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})\s+is\s+([0-9]+(?:\.[0-9]+)?)""",
             options = setOf(RegexOption.IGNORE_CASE)
-        )
-        val match = regex.find(html) ?: return null
-        val displayDate = match.groupValues[1].trim()
+        ).find(normalized)
+
+        val summaryMatch = Regex(
+            pattern = """OQD(?:\s+Daily)?\s+Marker Price\s+([0-9]+(?:\.[0-9]+)?)\s+(\d{1,2}\s+[A-Za-z]{3}(?:[-,]\s*\d{4}))""",
+            options = setOf(RegexOption.IGNORE_CASE)
+        ).find(normalized)
+
+        val displayDate: String
+        val price: Double
+
+        when {
+            sentenceMatch != null -> {
+                displayDate = sentenceMatch.groupValues[1].trim()
+                price = sentenceMatch.groupValues[2].toDoubleOrNull() ?: return null
+            }
+            summaryMatch != null -> {
+                price = summaryMatch.groupValues[1].toDoubleOrNull() ?: return null
+                displayDate = summaryMatch.groupValues[2].trim()
+            }
+            else -> {
+                Log.w(TAG, "Unable to parse OQD price from homepage content")
+                return null
+            }
+        }
+
         val tradeDate = parseTradeDate(displayDate) ?: return null
-        val price = match.groupValues[2].toDoubleOrNull() ?: return null
 
         return OilPricePoint(
             tradeDate = tradeDate.toString(),
@@ -90,14 +117,29 @@ class OilPriceRepository(context: Context) {
     }
 
     private fun parseTradeDate(displayDate: String): LocalDate? {
-        return try {
-            LocalDate.parse(
-                displayDate,
-                DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.ENGLISH)
-            )
-        } catch (_: DateTimeParseException) {
-            null
+        val normalizedDate = displayDate.replace(Regex("\\s+"), " ").trim()
+        val patterns = listOf(
+            "MMMM d, yyyy",
+            "MMM d, yyyy",
+            "d MMM-yyyy",
+            "dd MMM-yyyy",
+            "d MMM, yyyy",
+            "dd MMM, yyyy"
+        )
+
+        for (pattern in patterns) {
+            try {
+                return LocalDate.parse(
+                    normalizedDate,
+                    DateTimeFormatter.ofPattern(pattern, Locale.ENGLISH)
+                )
+            } catch (_: DateTimeParseException) {
+                // Try the next supported date shape from the website.
+            }
         }
+
+        Log.w(TAG, "Unable to parse trade date: $displayDate")
+        return null
     }
 
     private fun savePoint(point: OilPricePoint) {

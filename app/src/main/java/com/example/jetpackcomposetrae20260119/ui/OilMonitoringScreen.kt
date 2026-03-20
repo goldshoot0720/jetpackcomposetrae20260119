@@ -16,11 +16,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -40,21 +40,20 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.jetpackcomposetrae20260119.data.OilPricePoint
 import com.example.jetpackcomposetrae20260119.data.OilPriceRepository
+import com.example.jetpackcomposetrae20260119.ui.theme.Copper
+import com.example.jetpackcomposetrae20260119.ui.theme.Fog
+import com.example.jetpackcomposetrae20260119.ui.theme.Garnet
+import com.example.jetpackcomposetrae20260119.ui.theme.Ink
+import com.example.jetpackcomposetrae20260119.ui.theme.Midnight
+import com.example.jetpackcomposetrae20260119.ui.theme.Moss
+import com.example.jetpackcomposetrae20260119.ui.theme.Porcelain
+import com.example.jetpackcomposetrae20260119.ui.theme.Sand
+import com.example.jetpackcomposetrae20260119.ui.theme.Slate
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
-private val OilBg = Color(0xFFF7F3EA)
-private val OilHeader = Color(0xFF213547)
-private val OilPrimary = Color(0xFFB45309)
-private val OilPrimarySoft = Color(0xFFFDE7C7)
-private val OilAccent = Color(0xFF0F766E)
-private val OilCard = Color(0xFFFFFCF7)
-private val OilMuted = Color(0xFF6B7280)
-private val OilLine = Color(0xFFDC2626)
 
 @Composable
 fun OilMonitoringScreen(
@@ -68,45 +67,49 @@ fun OilMonitoringScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(OilBg)
+            .background(Color.Transparent)
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
-                Column(
+                Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color(0xFF1F2937), Color(0xFF374151))
-                            )
-                        )
-                        .padding(horizontal = 20.dp, vertical = 24.dp)
+                        .padding(horizontal = 4.dp),
+                    shape = RoundedCornerShape(30.dp),
+                    color = Porcelain
                 ) {
-                    Text(
-                        text = "石油监控",
-                        color = Color.White,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "追踪 Gulf Mercantile Exchange 的 OQD Daily Marker Price",
-                        color = Color.White.copy(alpha = 0.8f),
-                        fontSize = 14.sp
-                    )
+                    Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)) {
+                        Text(
+                            text = "Market Signal",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Copper
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "用更平靜的版面讀取 OQD Daily Marker Price 的變化",
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = Ink
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "資料來源為 Gulf Mercantile Exchange，支援開啟時與手動同步。",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Slate
+                        )
+                    }
                 }
             }
 
             item {
-                Card(
+                Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = OilCard)
+                        .padding(horizontal = 4.dp),
+                    shape = RoundedCornerShape(30.dp),
+                    color = Midnight
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
                         Row(
@@ -116,29 +119,28 @@ fun OilMonitoringScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = "最新 OQD Daily Marker Price",
-                                    color = OilMuted,
-                                    fontSize = 13.sp
+                                    text = "OQD Daily Marker Price",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Fog.copy(alpha = 0.72f)
                                 )
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = latest?.let { "$${String.format(Locale.US, "%.2f", it.price)}" } ?: "--",
-                                    fontSize = 34.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = OilHeader
+                                    style = MaterialTheme.typography.displayMedium,
+                                    color = Fog
                                 )
                             }
 
                             Surface(
                                 shape = CircleShape,
-                                color = OilPrimarySoft,
+                                color = Fog.copy(alpha = 0.08f),
                                 modifier = Modifier.size(56.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         imageVector = Icons.Default.Refresh,
                                         contentDescription = null,
-                                        tint = OilPrimary
+                                        tint = Copper
                                     )
                                 }
                             }
@@ -146,24 +148,18 @@ fun OilMonitoringScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        PriceMetaRow(
-                            label = "报价日期",
-                            value = latest?.displayDate ?: "--"
-                        )
+                        PriceMetaRow("交易日期", latest?.displayDate ?: "--")
                         Spacer(modifier = Modifier.height(8.dp))
                         PriceMetaRow(
-                            label = "最近抓取",
-                            value = latest?.let { OilPriceRepository.formatFetchedAt(it.fetchedAt) } ?: "--"
+                            "同步時間",
+                            latest?.let { OilPriceRepository.formatFetchedAt(it.fetchedAt) } ?: "--"
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        PriceMetaRow(
-                            label = "资料笔数",
-                            value = history.size.toString()
-                        )
+                        PriceMetaRow("歷史筆數", history.size.toString())
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Button(
+                        FilledTonalButton(
                             onClick = viewModel::refreshLatestPrice,
                             enabled = !isLoading,
                             modifier = Modifier.fillMaxWidth()
@@ -173,32 +169,31 @@ fun OilMonitoringScreen(
                                 contentDescription = null
                             )
                             Spacer(modifier = Modifier.size(8.dp))
-                            Text(text = if (isLoading) "抓取中..." else "立即更新")
+                            Text(text = if (isLoading) "同步中..." else "立即更新價格")
                         }
                     }
                 }
             }
 
             item {
-                Card(
+                Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                        .padding(horizontal = 4.dp),
+                    shape = RoundedCornerShape(30.dp),
+                    color = Porcelain
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
                         Text(
-                            text = "价格走势",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = OilHeader
+                            text = "近 30 筆趨勢",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = Ink
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "开 App 会自动抓取，每天下午 1:00 也会背景更新。",
-                            fontSize = 13.sp,
-                            color = OilMuted
+                            text = "圖表刻意保持簡潔，優先凸顯方向與幅度。",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Slate
                         )
                         Spacer(modifier = Modifier.height(18.dp))
                         OilPriceChart(history = history)
@@ -208,17 +203,17 @@ fun OilMonitoringScreen(
 
             if (errorMessage != null) {
                 item {
-                    Card(
+                    Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF1F2))
+                            .padding(horizontal = 4.dp),
+                        shape = RoundedCornerShape(22.dp),
+                        color = Color(0xFFF6E5E1)
                     ) {
                         Text(
                             text = errorMessage.orEmpty(),
                             modifier = Modifier.padding(16.dp),
-                            color = Color(0xFFB91C1C)
+                            color = Garnet
                         )
                     }
                 }
@@ -226,24 +221,29 @@ fun OilMonitoringScreen(
 
             if (history.isNotEmpty()) {
                 item {
-                    Card(
+                    Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                            .padding(horizontal = 4.dp),
+                        shape = RoundedCornerShape(30.dp),
+                        color = Porcelain
                     ) {
+                        val recentPoints = history.takeLast(8).reversed()
                         Column(modifier = Modifier.padding(20.dp)) {
                             Text(
-                                text = "最近纪录",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = OilHeader
+                                text = "最近記錄",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = Ink
                             )
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            history.takeLast(8).reversed().forEach { point ->
+                            recentPoints.forEachIndexed { index, point ->
                                 RecentPriceRow(point)
+                                if (index != recentPoints.lastIndex) {
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    HorizontalDivider(color = Fog)
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                }
                             }
                         }
                     }
@@ -251,14 +251,14 @@ fun OilMonitoringScreen(
             }
 
             item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
         }
 
         if (isLoading && history.isEmpty()) {
             CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center),
-                color = OilPrimary
+                color = Copper
             )
         }
     }
@@ -270,8 +270,17 @@ private fun PriceMetaRow(label: String, value: String) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = label, color = OilMuted, fontSize = 13.sp)
-        Text(text = value, color = OilHeader, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+        Text(
+            text = label,
+            color = Fog.copy(alpha = 0.72f),
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Text(
+            text = value,
+            color = Fog,
+            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 
@@ -284,7 +293,10 @@ private fun OilPriceChart(history: List<OilPricePoint>) {
                 .height(220.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = "还没有油价资料", color = OilMuted)
+            Text(
+                text = "還沒有足夠的歷史資料可繪製圖表",
+                color = Slate
+            )
         }
         return
     }
@@ -309,7 +321,7 @@ private fun OilPriceChart(history: List<OilPricePoint>) {
             val chartHeight = size.height - topPadding - bottomPadding
 
             drawRoundRect(
-                color = OilPrimarySoft.copy(alpha = 0.4f),
+                color = Sand.copy(alpha = 0.55f),
                 topLeft = Offset(leftPadding, topPadding),
                 size = Size(chartWidth, chartHeight),
                 cornerRadius = CornerRadius(24f, 24f)
@@ -318,7 +330,7 @@ private fun OilPriceChart(history: List<OilPricePoint>) {
             repeat(4) { index ->
                 val y = topPadding + chartHeight * (index / 3f)
                 drawLine(
-                    color = Color(0xFFE5E7EB),
+                    color = Fog,
                     start = Offset(leftPadding, y),
                     end = Offset(leftPadding + chartWidth, y),
                     strokeWidth = 1.dp.toPx()
@@ -329,7 +341,7 @@ private fun OilPriceChart(history: List<OilPricePoint>) {
                 val x = if (chartPoints.size == 1) {
                     leftPadding + chartWidth / 2f
                 } else {
-                    leftPadding + chartWidth * index / (chartPoints.lastIndex.toFloat())
+                    leftPadding + chartWidth * index / chartPoints.lastIndex.toFloat()
                 }
                 val normalized = ((point.price - minPrice) / range).toFloat()
                 val y = topPadding + chartHeight - (chartHeight * normalized)
@@ -339,13 +351,7 @@ private fun OilPriceChart(history: List<OilPricePoint>) {
             val fillPath = Path().apply {
                 val first = offsets.first()
                 moveTo(first.x, topPadding + chartHeight)
-                offsets.forEachIndexed { index, offset ->
-                    if (index == 0) {
-                        lineTo(offset.x, offset.y)
-                    } else {
-                        lineTo(offset.x, offset.y)
-                    }
-                }
+                offsets.forEach { offset -> lineTo(offset.x, offset.y) }
                 val last = offsets.last()
                 lineTo(last.x, topPadding + chartHeight)
                 close()
@@ -354,7 +360,7 @@ private fun OilPriceChart(history: List<OilPricePoint>) {
             drawPath(
                 path = fillPath,
                 brush = Brush.verticalGradient(
-                    colors = listOf(OilLine.copy(alpha = 0.25f), Color.Transparent)
+                    colors = listOf(Copper.copy(alpha = 0.32f), Color.Transparent)
                 )
             )
 
@@ -366,7 +372,7 @@ private fun OilPriceChart(history: List<OilPricePoint>) {
 
             drawPath(
                 path = linePath,
-                color = OilLine,
+                color = Copper,
                 style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
             )
 
@@ -377,7 +383,7 @@ private fun OilPriceChart(history: List<OilPricePoint>) {
                     center = offset
                 )
                 drawCircle(
-                    color = OilAccent,
+                    color = Moss,
                     radius = 3.dp.toPx(),
                     center = offset
                 )
@@ -392,22 +398,22 @@ private fun OilPriceChart(history: List<OilPricePoint>) {
         ) {
             Text(
                 text = chartPoints.first().tradeDate.toDisplayDate(),
-                color = OilMuted,
+                color = Slate,
                 style = MaterialTheme.typography.bodySmall
             )
             Text(
                 text = "Low $${String.format(Locale.US, "%.2f", minPrice)}",
-                color = OilMuted,
+                color = Slate,
                 style = MaterialTheme.typography.bodySmall
             )
             Text(
                 text = "High $${String.format(Locale.US, "%.2f", maxPrice)}",
-                color = OilMuted,
+                color = Slate,
                 style = MaterialTheme.typography.bodySmall
             )
             Text(
                 text = chartPoints.last().tradeDate.toDisplayDate(),
-                color = OilMuted,
+                color = Slate,
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -419,32 +425,41 @@ private fun RecentPriceRow(point: OilPricePoint) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
             Text(
                 text = point.tradeDate.toDisplayDate(),
-                color = OilHeader,
+                color = Ink,
                 fontWeight = FontWeight.SemiBold
             )
             Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = "抓取时间 ${OilPriceRepository.formatFetchedAt(point.fetchedAt)}",
-                color = OilMuted,
-                style = MaterialTheme.typography.bodySmall
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.DateRange,
+                    contentDescription = null,
+                    tint = Slate,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.size(4.dp))
+                Text(
+                    text = OilPriceRepository.formatFetchedAt(point.fetchedAt),
+                    color = Slate,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
         Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = OilPrimarySoft
+            shape = RoundedCornerShape(16.dp),
+            color = Sand
         ) {
             Text(
                 text = "$${String.format(Locale.US, "%.2f", point.price)}",
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                 fontWeight = FontWeight.Bold,
-                color = OilPrimary
+                color = Midnight
             )
         }
     }

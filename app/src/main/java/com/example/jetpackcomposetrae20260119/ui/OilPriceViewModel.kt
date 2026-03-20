@@ -41,7 +41,7 @@ class OilPriceViewModel(application: Application) : AndroidViewModel(application
             _history.value = savedHistory
             _latest.value = latestPoint ?: savedHistory.lastOrNull()
             _errorMessage.value = if (latestPoint == null && savedHistory.isEmpty()) {
-                "目前无法取得 OQD 价格，请稍后再试。"
+                "目前無法取得 OQD 最新價格，請稍後再試。"
             } else {
                 null
             }

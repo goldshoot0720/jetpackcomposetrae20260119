@@ -1,52 +1,55 @@
 package com.example.jetpackcomposetrae20260119.ui
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.jetpackcomposetrae20260119.data.Subscription
+import com.example.jetpackcomposetrae20260119.ui.theme.Copper
+import com.example.jetpackcomposetrae20260119.ui.theme.Fog
+import com.example.jetpackcomposetrae20260119.ui.theme.Garnet
+import com.example.jetpackcomposetrae20260119.ui.theme.Ink
+import com.example.jetpackcomposetrae20260119.ui.theme.Midnight
+import com.example.jetpackcomposetrae20260119.ui.theme.Moss
+import com.example.jetpackcomposetrae20260119.ui.theme.Porcelain
+import com.example.jetpackcomposetrae20260119.ui.theme.Sand
+import com.example.jetpackcomposetrae20260119.ui.theme.Slate
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
-// Premium color palette
-private val GradientStart = Color(0xFF667EEA)
-private val GradientEnd = Color(0xFF764BA2)
-private val AccentOrange = Color(0xFFFF6B35)
-private val AccentRed = Color(0xFFE53E3E)
-private val SurfaceLight = Color(0xFFF7FAFC)
-private val CardBg = Color(0xFFFFFFFF)
-private val TextPrimary = Color(0xFF1A202C)
-private val TextSecondary = Color(0xFF718096)
-private val WarningBg = Color(0xFFFFF5F5)
-private val WarningBorder = Color(0xFFFEB2B2)
-private val SuccessGreen = Color(0xFF38A169)
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubscriptionScreen(
     viewModel: SubscriptionViewModel
@@ -58,95 +61,52 @@ fun SubscriptionScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(SurfaceLight)
+            .background(Color.Transparent)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Gradient header
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(GradientStart, GradientEnd)
-                        )
-                    )
-                    .statusBarsPadding()
-                    .padding(horizontal = 20.dp, vertical = 24.dp)
-            ) {
-                Column {
-                    Text(
-                        text = "📋 訂閱管理",
-                        color = Color.White,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "共 ${subscriptions.size} 個訂閱項目",
-                        color = Color.White.copy(alpha = 0.85f),
-                        fontSize = 14.sp
-                    )
+        LazyColumn(
+            contentPadding = PaddingValues(bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            item {
+                SubscriptionOverview(
+                    totalCount = subscriptions.size,
+                    urgentCount = upcomingSubscriptions.size
+                )
+            }
+
+            if (upcomingSubscriptions.isNotEmpty()) {
+                item {
+                    UpcomingNotificationBanner(upcomingSubscriptions)
                 }
             }
 
-            if (isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator(
-                            color = GradientStart,
-                            strokeWidth = 3.dp
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "載入中...",
-                            color = TextSecondary,
-                            fontSize = 14.sp
-                        )
+            if (isLoading && subscriptions.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(color = Copper, strokeWidth = 3.dp)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "正在整理你的訂閱資料",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Slate
+                            )
+                        }
                     }
                 }
+            } else if (subscriptions.isEmpty()) {
+                item {
+                    EmptySubscriptionState()
+                }
             } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    // In-app notification banner for upcoming subscriptions
-                    if (upcomingSubscriptions.isNotEmpty()) {
-                        item {
-                            UpcomingNotificationBanner(upcomingSubscriptions)
-                            Spacer(modifier = Modifier.height(4.dp))
-                        }
-                    }
-
-                    if (subscriptions.isEmpty()) {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillParentMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "尚無訂閱紀錄",
-                                    color = TextSecondary,
-                                    fontSize = 16.sp
-                                )
-                            }
-                        }
-                    } else {
-                        items(subscriptions) { subscription ->
-                            SubscriptionItem(subscription)
-                        }
-                    }
-
-                    // Bottom spacing for navigation bar
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
+                items(subscriptions) { subscription ->
+                    SubscriptionItem(subscription)
                 }
             }
         }
@@ -154,37 +114,104 @@ fun SubscriptionScreen(
 }
 
 @Composable
-fun UpcomingNotificationBanner(upcoming: List<Subscription>) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.7f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = EaseInOutSine),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseAlpha"
-    )
-
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF5F5)),
+private fun SubscriptionOverview(
+    totalCount: Int,
+    urgentCount: Int
+) {
+    Surface(
+        shape = RoundedCornerShape(30.dp),
+        color = Porcelain,
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(6.dp, RoundedCornerShape(16.dp))
+            .padding(horizontal = 4.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            Color(0xFFFFF5F5),
-                            Color(0xFFFED7D7).copy(alpha = alpha)
-                        )
-                    )
+                .padding(horizontal = 20.dp, vertical = 22.dp)
+        ) {
+            Text(
+                text = "Subscription Ledger",
+                style = MaterialTheme.typography.labelMedium,
+                color = Copper
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "把即將續訂的壓力，改成可以提早處理的節奏",
+                style = MaterialTheme.typography.headlineLarge,
+                color = Ink
+            )
+            Spacer(modifier = Modifier.height(14.dp))
+            Text(
+                text = "畫面分成總覽、提醒和單筆資訊，減少混雜的視線跳轉。",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Slate
+            )
+            Spacer(modifier = Modifier.height(18.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OverviewBlock(
+                    label = "總筆數",
+                    value = totalCount.toString(),
+                    tone = Midnight,
+                    modifier = Modifier.weight(1f)
                 )
-                .padding(16.dp)
+                OverviewBlock(
+                    label = "三日內",
+                    value = urgentCount.toString(),
+                    tone = if (urgentCount > 0) Garnet else Moss,
+                    modifier = Modifier.weight(1f)
+                )
+                OverviewBlock(
+                    label = "狀態",
+                    value = if (urgentCount > 0) "提醒中" else "穩定",
+                    tone = Copper,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun OverviewBlock(
+    label: String,
+    value: String,
+    tone: Color,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(22.dp),
+        color = Fog,
+        modifier = modifier
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = Slate
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                color = tone
+            )
+        }
+    }
+}
+
+@Composable
+fun UpcomingNotificationBanner(upcoming: List<Subscription>) {
+    Surface(
+        shape = RoundedCornerShape(28.dp),
+        color = Color(0xFFF5E9E6),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -193,77 +220,38 @@ fun UpcomingNotificationBanner(upcoming: List<Subscription>) {
                 Icon(
                     imageVector = Icons.Default.Notifications,
                     contentDescription = null,
-                    tint = AccentRed,
-                    modifier = Modifier.size(24.dp)
+                    tint = Garnet
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "⚠️ ${upcoming.size} 個訂閱即將到期",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AccentRed
+                    text = "接下來 3 天內有 ${upcoming.size} 筆續訂需要注意",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Garnet
                 )
             }
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             upcoming.forEach { sub ->
-                val dateStr = try {
-                    ZonedDateTime.parse(sub.nextDate)
-                        .format(DateTimeFormatter.ofPattern("MM/dd"))
-                } catch (e: Exception) {
-                    sub.nextDate.take(5)
-                }
-                val daysLeft = try {
-                    val itemDate = ZonedDateTime.parse(sub.nextDate).toLocalDate()
-                    ChronoUnit.DAYS.between(LocalDate.now(), itemDate)
-                } catch (e: Exception) {
-                    -1L
-                }
-
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 3.dp),
+                        .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (daysLeft <= 1) AccentRed else AccentOrange
-                                )
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = sub.name,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextPrimary
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Ink
                         )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "$dateStr",
-                            fontSize = 13.sp,
-                            color = TextSecondary
+                            text = formatSubscriptionDate(sub.nextDate),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Slate
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (daysLeft <= 1) AccentRed.copy(alpha = 0.15f) else AccentOrange.copy(alpha = 0.15f)
-                        ) {
-                            Text(
-                                text = if (daysLeft == 0L) "今天" else "${daysLeft}天",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (daysLeft <= 1) AccentRed else AccentOrange,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
-                        }
                     }
+                    DueBadge(daysUntilDue = daysUntil(sub.nextDate))
                 }
             }
         }
@@ -271,185 +259,248 @@ fun UpcomingNotificationBanner(upcoming: List<Subscription>) {
 }
 
 @Composable
-fun SubscriptionItem(subscription: Subscription) {
-    val daysUntilDue = try {
-        val itemDate = ZonedDateTime.parse(subscription.nextDate).toLocalDate()
-        ChronoUnit.DAYS.between(LocalDate.now(), itemDate)
-    } catch (e: Exception) {
-        Long.MAX_VALUE
-    }
-
-    val isUrgent = daysUntilDue in 0..3
-    val borderColor = when {
-        daysUntilDue < 0 -> TextSecondary
-        daysUntilDue <= 1 -> AccentRed
-        daysUntilDue <= 3 -> AccentOrange
-        else -> Color.Transparent
-    }
-
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = CardBg
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = if (isUrgent) 8.dp else 3.dp,
-                shape = RoundedCornerShape(16.dp)
-            )
+private fun EmptySubscriptionState() {
+    Surface(
+        shape = RoundedCornerShape(30.dp),
+        color = Porcelain,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
+        Column(
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 30.dp)
+        ) {
+            Text(
+                text = "目前沒有可顯示的訂閱資料",
+                style = MaterialTheme.typography.titleLarge,
+                color = Ink
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "同步完成後，這裡會用新的版面顯示每一筆續訂的時間壓力。",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Slate
+            )
+        }
+    }
+}
+
+@Composable
+fun SubscriptionItem(subscription: Subscription) {
+    val daysUntilDue = daysUntil(subscription.nextDate)
+    val accent = when {
+        daysUntilDue < 0 -> Slate
+        daysUntilDue <= 1 -> Garnet
+        daysUntilDue <= 3 -> Copper
+        else -> Moss
+    }
+
+    Surface(
+        shape = RoundedCornerShape(28.dp),
+        color = Porcelain,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(IntrinsicSize.Min)
+                .padding(horizontal = 18.dp, vertical = 18.dp)
         ) {
-            // Left accent bar
-            if (borderColor != Color.Transparent) {
-                Box(
-                    modifier = Modifier
-                        .width(4.dp)
-                        .fillMaxHeight()
-                        .background(borderColor)
-                )
-            }
-
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
-                // Header row: name + price
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        // Colored dot
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .clip(CircleShape)
-                                .background(GradientStart)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = subscription.name,
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = GradientStart.copy(alpha = 0.12f)
-                    ) {
-                        Text(
-                            text = "$${subscription.price}",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = GradientStart,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Date row
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.DateRange,
-                        contentDescription = null,
-                        tint = TextSecondary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-
-                    val formattedDate = try {
-                        ZonedDateTime.parse(subscription.nextDate)
-                            .format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
-                    } catch (e: Exception) {
-                        subscription.nextDate
-                    }
-
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "下次付款：$formattedDate",
-                        fontSize = 13.sp,
-                        color = TextSecondary
-                    )
-
-                    if (isUrgent) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (daysUntilDue <= 1) AccentRed.copy(alpha = 0.12f) else AccentOrange.copy(alpha = 0.12f)
-                        ) {
-                            Text(
-                                text = if (daysUntilDue == 0L) "⏰ 今天到期" else "⏰ ${daysUntilDue}天後",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (daysUntilDue <= 1) AccentRed else AccentOrange,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
-                }
-
-                // Account
-                if (subscription.account.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "👤",
-                            fontSize = 13.sp
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = subscription.account,
-                            fontSize = 13.sp,
-                            color = TextSecondary
-                        )
-                    }
-                }
-
-                // Site
-                if (subscription.site.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "🔗 ${subscription.site}",
-                        fontSize = 12.sp,
-                        color = GradientStart,
+                        text = subscription.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Ink,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "下次扣款 ${formatSubscriptionDate(subscription.nextDate)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Slate
+                    )
                 }
 
-                // Note
-                if (subscription.note.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = SurfaceLight
-                    ) {
-                        Text(
-                            text = "📝 ${subscription.note}",
-                            fontSize = 12.sp,
-                            color = TextSecondary,
-                            fontStyle = FontStyle.Italic,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                        )
-                    }
+                Surface(
+                    shape = RoundedCornerShape(18.dp),
+                    color = Sand
+                ) {
+                    Text(
+                        text = "$${subscription.price}",
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = accent
+                    )
                 }
             }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                MetaPill(
+                    icon = Icons.Default.DateRange,
+                    text = when {
+                        daysUntilDue < 0 -> "已過期"
+                        daysUntilDue == 0L -> "今天到期"
+                        daysUntilDue == Long.MAX_VALUE -> "日期未解析"
+                        else -> "$daysUntilDue 天後到期"
+                    },
+                    accent = accent,
+                    modifier = Modifier.weight(1f)
+                )
+
+                if (subscription.account.isNotBlank()) {
+                    MetaPill(
+                        icon = Icons.AutoMirrored.Filled.List,
+                        text = subscription.account,
+                        accent = Midnight,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            if (subscription.site.isNotBlank() || subscription.note.isNotBlank()) {
+                Spacer(modifier = Modifier.height(14.dp))
+                HorizontalDivider(color = Fog)
+                Spacer(modifier = Modifier.height(14.dp))
+            }
+
+            if (subscription.site.isNotBlank()) {
+                MetaLine(
+                    icon = Icons.AutoMirrored.Filled.List,
+                    label = "網站",
+                    value = subscription.site
+                )
+            }
+
+            if (subscription.note.isNotBlank()) {
+                if (subscription.site.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+                MetaLine(
+                    icon = Icons.Default.Notifications,
+                    label = "備註",
+                    value = subscription.note
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun DueBadge(daysUntilDue: Long) {
+    val background = when {
+        daysUntilDue <= 1 -> Garnet.copy(alpha = 0.12f)
+        daysUntilDue <= 3 -> Copper.copy(alpha = 0.12f)
+        else -> Moss.copy(alpha = 0.12f)
+    }
+    val color = when {
+        daysUntilDue <= 1 -> Garnet
+        daysUntilDue <= 3 -> Copper
+        else -> Moss
+    }
+    val content = when {
+        daysUntilDue < 0 -> "已過期"
+        daysUntilDue == 0L -> "今天"
+        daysUntilDue == Long.MAX_VALUE -> "未定"
+        else -> "$daysUntilDue 天"
+    }
+
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        color = background
+    ) {
+        Text(
+            text = content,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.labelLarge,
+            color = color
+        )
+    }
+}
+
+@Composable
+private fun MetaPill(
+    icon: ImageVector,
+    text: String,
+    accent: Color,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = Fog,
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = accent
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Ink,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun MetaLine(
+    icon: ImageVector,
+    label: String,
+    value: String
+) {
+    Row(verticalAlignment = Alignment.Top) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Copper,
+            modifier = Modifier.padding(top = 2.dp)
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Column {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = Slate
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Ink
+            )
+        }
+    }
+}
+
+private fun formatSubscriptionDate(raw: String): String {
+    return try {
+        ZonedDateTime.parse(raw).format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
+    } catch (_: Exception) {
+        raw
+    }
+}
+
+private fun daysUntil(raw: String): Long {
+    return try {
+        val itemDate = ZonedDateTime.parse(raw).toLocalDate()
+        ChronoUnit.DAYS.between(LocalDate.now(), itemDate)
+    } catch (_: Exception) {
+        Long.MAX_VALUE
     }
 }

@@ -14,8 +14,8 @@ android {
         applicationId = "com.example.jetpackcomposetrae20260119"
         minSdk = 24
         targetSdk = 36
-        versionCode = 9
-        versionName = "1.2.6"
+        versionCode = 10
+        versionName = "1.2.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

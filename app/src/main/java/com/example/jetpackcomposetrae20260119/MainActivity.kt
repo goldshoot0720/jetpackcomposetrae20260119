@@ -21,11 +21,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -37,7 +36,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -133,134 +131,98 @@ private fun HomeScreen(
     usDebtViewModel: USDebtViewModel
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
-    val subscriptions by subscriptionViewModel.subscriptions.collectAsState()
-    val upcoming by subscriptionViewModel.upcomingSubscriptions.collectAsState()
-    val latestOil by oilPriceViewModel.latest.collectAsState()
 
     val tabs = listOf(
-        HomeTab("訂閱總覽", "Renewals", Icons.AutoMirrored.Filled.List),
-        HomeTab("油價監測", "Oil", Icons.Default.Refresh),
-        HomeTab("美債時鐘", "US Debt", Icons.Default.DateRange)
+        HomeTab("訂閱", "Renewals", Icons.AutoMirrored.Filled.List),
+        HomeTab("油價", "Oil", Icons.Default.Refresh),
+        HomeTab("美債", "US Debt", Icons.Default.DateRange)
     )
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Mist)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 18.dp, vertical = 14.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(horizontal = 18.dp, vertical = 14.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                shape = RoundedCornerShape(34.dp),
-                color = Midnight,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(horizontal = 22.dp, vertical = 22.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Atlas Monitor",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Fog.copy(alpha = 0.72f)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "用更清楚的視角追蹤續訂壓力與市場價格",
-                                style = MaterialTheme.typography.displaySmall,
-                                color = Fog
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Text(
-                                text = "首頁先給摘要，再進入細節畫面，減少閱讀切換成本。",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Fog.copy(alpha = 0.74f)
-                            )
-                        }
-
-                        Surface(
-                            shape = CircleShape,
-                            color = Fog.copy(alpha = 0.08f),
-                            modifier = Modifier.padding(start = 16.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = null,
-                                tint = Copper,
-                                modifier = Modifier.padding(14.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(22.dp))
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        HeroMetric(
-                            label = "訂閱數",
-                            value = subscriptions.size.toString(),
-                            note = if (upcoming.isEmpty()) "近期穩定" else "${upcoming.size} 筆即將到期",
-                            modifier = Modifier.weight(1f)
-                        )
-                        HeroMetric(
-                            label = "最新油價",
-                            value = latestOil?.let { "$${"%.2f".format(it.price)}" } ?: "--",
-                            note = latestOil?.displayDate ?: "等待同步",
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
+            Column {
+                Text(
+                    text = "Atlas Monitor",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Midnight.copy(alpha = 0.68f)
+                )
+                Text(
+                    text = "選單列",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Ink
+                )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             Surface(
-                shape = RoundedCornerShape(26.dp),
+                shape = CircleShape,
                 color = Fog,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.size(56.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    tabs.forEachIndexed { index, tab ->
-                        DashboardTab(
-                            tab = tab,
-                            selected = selectedTab == index,
-                            onClick = { selectedTab = index },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = null,
+                        tint = Copper
+                    )
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.padding(top = 14.dp))
 
-            AnimatedContent(
-                targetState = selectedTab,
-                transitionSpec = { fadeIn() togetherWith fadeOut() },
-                label = "home_content",
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = Fog,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-            ) { tabIndex ->
-                when (tabIndex) {
-                    0 -> SubscriptionScreen(subscriptionViewModel)
-                    1 -> OilMonitoringScreen(oilPriceViewModel)
-                    else -> USDebtScreen(usDebtViewModel)
+                    .padding(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                tabs.forEachIndexed { index, tab ->
+                    MenuTab(
+                        tab = tab,
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        modifier = Modifier.weight(1f)
+                    )
                 }
+            }
+        }
+
+        Spacer(modifier = Modifier.padding(top = 14.dp))
+
+        Text(
+            text = "內容展示",
+            style = MaterialTheme.typography.labelLarge,
+            color = Midnight.copy(alpha = 0.62f)
+        )
+
+        Spacer(modifier = Modifier.padding(top = 10.dp))
+
+        AnimatedContent(
+            targetState = selectedTab,
+            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            label = "home_content",
+            modifier = Modifier.weight(1f)
+        ) { tabIndex ->
+            when (tabIndex) {
+                0 -> SubscriptionScreen(subscriptionViewModel)
+                1 -> OilMonitoringScreen(oilPriceViewModel)
+                else -> USDebtScreen(usDebtViewModel)
             }
         }
     }
@@ -273,7 +235,7 @@ private data class HomeTab(
 )
 
 @Composable
-private fun DashboardTab(
+private fun MenuTab(
     tab: HomeTab,
     selected: Boolean,
     onClick: () -> Unit,
@@ -281,77 +243,44 @@ private fun DashboardTab(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(18.dp),
         color = if (selected) Midnight else Fog,
         modifier = modifier
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 10.dp, vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Surface(
                 shape = CircleShape,
-                color = if (selected) Copper.copy(alpha = 0.18f) else Cloud.copy(alpha = 0.35f)
+                color = if (selected) Copper.copy(alpha = 0.18f) else Cloud.copy(alpha = 0.35f),
+                modifier = Modifier.size(40.dp)
             ) {
-                Icon(
-                    imageVector = tab.icon,
-                    contentDescription = tab.title,
-                    tint = if (selected) Copper else Ink,
-                    modifier = Modifier.padding(10.dp)
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = tab.icon,
+                        contentDescription = tab.title,
+                        tint = if (selected) Copper else Ink
+                    )
+                }
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(
-                    text = tab.eyebrow,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (selected) Fog.copy(alpha = 0.68f) else Midnight.copy(alpha = 0.62f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = tab.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (selected) Fog else Ink,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-    }
-}
 
-@Composable
-private fun HeroMetric(
-    label: String,
-    value: String,
-    note: String,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        shape = RoundedCornerShape(24.dp),
-        color = Fog.copy(alpha = 0.08f),
-        modifier = modifier
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = Fog.copy(alpha = 0.72f)
+                text = tab.eyebrow,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (selected) Fog.copy(alpha = 0.68f) else Midnight.copy(alpha = 0.62f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = value,
-                style = MaterialTheme.typography.headlineLarge,
-                color = Fog
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = note,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Fog.copy(alpha = 0.74f)
+                text = tab.title,
+                style = MaterialTheme.typography.titleSmall,
+                color = if (selected) Fog else Ink,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

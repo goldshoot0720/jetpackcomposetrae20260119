@@ -16,7 +16,10 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -45,6 +49,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.work.OneTimeWorkRequestBuilder
@@ -129,6 +134,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HomeScreen(
     subscriptionViewModel: SubscriptionViewModel,
@@ -143,28 +149,35 @@ private fun HomeScreen(
 
     val tabs = listOf(
         HomeTab("訂閱總覽", "Renewals", Icons.AutoMirrored.Filled.List),
-        HomeTab("油價監測", "OQD Tracker", Icons.Default.Refresh),
-        HomeTab("US Debt", "Debt Clock", Icons.Default.DateRange)
+        HomeTab("油價監測", "Oil", Icons.Default.Refresh),
+        HomeTab("美債時鐘", "US Debt", Icons.Default.DateRange)
     )
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(Mist)
     ) {
+        val isCompact = maxWidth < 430.dp
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .padding(horizontal = 18.dp, vertical = 14.dp)
+                .padding(horizontal = if (isCompact) 14.dp else 18.dp, vertical = 14.dp)
         ) {
             Surface(
-                shape = RoundedCornerShape(34.dp),
+                shape = RoundedCornerShape(if (isCompact) 30.dp else 34.dp),
                 color = Midnight,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(horizontal = 22.dp, vertical = 22.dp)) {
+                Column(
+                    modifier = Modifier.padding(
+                        horizontal = if (isCompact) 18.dp else 22.dp,
+                        vertical = if (isCompact) 20.dp else 22.dp
+                    )
+                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -179,12 +192,16 @@ private fun HomeScreen(
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "掌握訂閱、油價與美國債務的即時脈動",
-                                style = MaterialTheme.typography.displayMedium,
+                                style = if (isCompact) {
+                                    MaterialTheme.typography.displaySmall
+                                } else {
+                                    MaterialTheme.typography.displayMedium
+                                },
                                 color = Fog
                             )
                             Spacer(modifier = Modifier.height(10.dp))
                             Text(
-                                text = "在同一個首頁快速查看續訂提醒、最新油價與 US National Debt，讓重要變化一眼就能追上。",
+                                text = "在同一個首頁快速查看續訂提醒、最新油價與 US National Debt，重要變化一眼就能追上。",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Fog.copy(alpha = 0.74f)
                             )
@@ -193,22 +210,24 @@ private fun HomeScreen(
                         Surface(
                             shape = CircleShape,
                             color = Fog.copy(alpha = 0.08f),
-                            modifier = Modifier.padding(start = 16.dp)
+                            modifier = Modifier.padding(start = 14.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
                                 contentDescription = null,
                                 tint = Copper,
-                                modifier = Modifier.padding(14.dp)
+                                modifier = Modifier.padding(if (isCompact) 12.dp else 14.dp)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(22.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                    Row(
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        maxItemsInEachRow = if (isCompact) 2 else 3
                     ) {
                         HeroMetric(
                             label = "訂閱數量",
@@ -218,19 +237,31 @@ private fun HomeScreen(
                             } else {
                                 "${upcoming.size} 個項目即將續訂"
                             },
-                            modifier = Modifier.weight(1f)
+                            modifier = if (isCompact) {
+                                Modifier.fillMaxWidth(0.48f)
+                            } else {
+                                Modifier.fillMaxWidth(0.31f)
+                            }
                         )
                         HeroMetric(
                             label = "最新油價",
                             value = latestOil?.let { "$${"%.2f".format(it.price)}" } ?: "--",
                             note = latestOil?.displayDate ?: "尚未同步資料",
-                            modifier = Modifier.weight(1f)
+                            modifier = if (isCompact) {
+                                Modifier.fillMaxWidth(0.48f)
+                            } else {
+                                Modifier.fillMaxWidth(0.31f)
+                            }
                         )
                         HeroMetric(
                             label = "US Debt",
                             value = latestDebt?.let { formatDebtCompact(it.debt) } ?: "--",
                             note = latestDebt?.capturedAt?.toHomeCapturedAt() ?: "尚未同步資料",
-                            modifier = Modifier.weight(1f)
+                            modifier = if (isCompact) {
+                                Modifier.fillMaxWidth()
+                            } else {
+                                Modifier.fillMaxWidth(0.31f)
+                            }
                         )
                     }
                 }
@@ -238,25 +269,24 @@ private fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Surface(
-                shape = RoundedCornerShape(26.dp),
-                color = Fog,
-                modifier = Modifier.fillMaxWidth()
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                maxItemsInEachRow = if (isCompact) 2 else 3
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    tabs.forEachIndexed { index, tab ->
-                        DashboardTab(
-                            tab = tab,
-                            selected = selectedTab == index,
-                            onClick = { selectedTab = index },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                tabs.forEachIndexed { index, tab ->
+                    DashboardTab(
+                        tab = tab,
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        compact = isCompact,
+                        modifier = if (isCompact) {
+                            if (index == tabs.lastIndex) Modifier.fillMaxWidth() else Modifier.fillMaxWidth(0.48f)
+                        } else {
+                            Modifier.fillMaxWidth(0.31f)
+                        }
+                    )
                 }
             }
 
@@ -288,43 +318,85 @@ private fun DashboardTab(
     tab: HomeTab,
     selected: Boolean,
     onClick: () -> Unit,
+    compact: Boolean,
     modifier: Modifier = Modifier
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(if (compact) 24.dp else 20.dp),
         color = if (selected) Midnight else Fog,
         modifier = modifier
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                shape = CircleShape,
-                color = if (selected) Copper.copy(alpha = 0.18f) else Cloud.copy(alpha = 0.35f)
+        if (compact) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                horizontalAlignment = Alignment.Start
             ) {
-                Icon(
-                    imageVector = tab.icon,
-                    contentDescription = tab.title,
-                    tint = if (selected) Copper else Ink,
-                    modifier = Modifier.padding(10.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
+                Surface(
+                    shape = CircleShape,
+                    color = if (selected) Copper.copy(alpha = 0.18f) else Cloud.copy(alpha = 0.35f)
+                ) {
+                    Icon(
+                        imageVector = tab.icon,
+                        contentDescription = tab.title,
+                        tint = if (selected) Copper else Ink,
+                        modifier = Modifier.padding(10.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = tab.eyebrow,
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (selected) Fog.copy(alpha = 0.68f) else Midnight.copy(alpha = 0.62f)
+                    color = if (selected) Fog.copy(alpha = 0.68f) else Midnight.copy(alpha = 0.62f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = tab.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (selected) Fog else Ink
+                    style = MaterialTheme.typography.titleLarge,
+                    color = if (selected) Fog else Ink,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+            }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = if (selected) Copper.copy(alpha = 0.18f) else Cloud.copy(alpha = 0.35f)
+                ) {
+                    Icon(
+                        imageVector = tab.icon,
+                        contentDescription = tab.title,
+                        tint = if (selected) Copper else Ink,
+                        modifier = Modifier.padding(10.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = tab.eyebrow,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (selected) Fog.copy(alpha = 0.68f) else Midnight.copy(alpha = 0.62f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = tab.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = if (selected) Fog else Ink,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }
@@ -346,13 +418,17 @@ private fun HeroMetric(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = Fog.copy(alpha = 0.72f)
+                color = Fog.copy(alpha = 0.72f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = value,
                 style = MaterialTheme.typography.headlineLarge,
-                color = Fog
+                color = Fog,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(

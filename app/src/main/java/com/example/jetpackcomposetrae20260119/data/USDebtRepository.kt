@@ -70,12 +70,15 @@ class USDebtRepository(context: Context) {
     private fun parseNationalDebt(html: String): USDebtPoint? {
         val now = Instant.now()
         val preferredElementId = findLayer29ElementId(html)
+            ?: run {
+                Log.w(TAG, "Unable to locate layer29 debt element on current homepage")
+                return null
+            }
         val candidates = parseScriptCandidates(html, now)
         val bestCandidate = candidates.firstOrNull { it.elementId == preferredElementId }
-            ?: candidates.maxByOrNull { it.debt }
 
         if (bestCandidate == null) {
-            Log.w(TAG, "Unable to parse US national debt from current homepage")
+            Log.w(TAG, "Unable to parse US national debt from preferred element: $preferredElementId")
             return null
         }
 

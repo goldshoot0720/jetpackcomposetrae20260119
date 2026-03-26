@@ -16,8 +16,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.jetpackcomposetrae20260119.data.USDebtPoint
 import com.example.jetpackcomposetrae20260119.data.USDebtRepository
@@ -59,9 +60,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
-fun USDebtScreen(
-    viewModel: USDebtViewModel
-) {
+fun USDebtScreen(viewModel: USDebtViewModel) {
     val latest by viewModel.latest.collectAsState()
     val history by viewModel.history.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -143,7 +142,7 @@ fun USDebtScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "還沒有足夠的 US Debt 歷史樣本，至少要成功抓取兩次才會開始畫圖。",
+                                text = "還沒有足夠的 US Debt 歷史樣本。先重新抓取幾次，之後就會顯示走勢圖。",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Slate
                             )
@@ -235,13 +234,13 @@ private fun SourceCard(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "追蹤 US National Debt 的即時估算值",
+                text = "追蹤 US National Debt 的即時估值",
                 style = MaterialTheme.typography.headlineLarge,
                 color = Ink
             )
             Spacer(modifier = Modifier.height(10.dp))
             Text(
-                text = "資料來源是 usdebtclock.org 首頁頁面，並非官方 API。若網站結構變動，抓取可能暫時失敗。",
+                text = "資料來源是 usdebtclock.org 首頁顯示的主債務欄位。此頁會解析官方頁面腳本，再換算成目前時間點的即時數值。",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Slate
             )
@@ -257,7 +256,7 @@ private fun SourceCard(
                     contentDescription = null
                 )
                 Spacer(modifier = Modifier.size(8.dp))
-                Text(text = if (isLoading) "抓取中..." else "重新抓取")
+                Text(text = if (isLoading) "重新抓取中..." else "重新抓取")
             }
         }
     }
@@ -310,7 +309,7 @@ private fun LatestDebtCard(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                        imageVector = Icons.Default.DateRange,
+                            imageVector = Icons.Default.DateRange,
                             contentDescription = null,
                             tint = Copper
                         )
@@ -338,7 +337,7 @@ private fun LatestDebtCard(
                     contentDescription = null
                 )
                 Spacer(modifier = Modifier.size(8.dp))
-                Text(text = if (isLoading) "抓取中..." else "重新抓取")
+                Text(text = if (isLoading) "重新抓取中..." else "重新抓取")
             }
         }
     }
@@ -380,7 +379,7 @@ private fun EmptyDebtState(
                         color = Ink
                     )
                     Text(
-                        text = "先重新抓取一次 US National Debt",
+                        text = "先完成一次成功抓取，就會顯示 US National Debt。",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Slate
                     )
@@ -407,7 +406,7 @@ private fun EmptyDebtState(
                     contentDescription = null
                 )
                 Spacer(modifier = Modifier.size(8.dp))
-                Text(text = if (isLoading) "抓取中..." else "重新抓取")
+                Text(text = if (isLoading) "重新抓取中..." else "重新抓取")
             }
         }
     }
@@ -526,30 +525,33 @@ private fun USDebtChart(history: List<USDebtPoint>) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = chartPoints.first().capturedAt.toShortCapturedAt(),
-                color = Slate,
-                style = MaterialTheme.typography.bodySmall
-            )
-            Text(
-                text = "Low ${formatDebtCompact(minDebt)}",
-                color = Slate,
-                style = MaterialTheme.typography.bodySmall
-            )
-            Text(
-                text = "High ${formatDebtCompact(maxDebt)}",
-                color = Slate,
-                style = MaterialTheme.typography.bodySmall
-            )
-            Text(
-                text = chartPoints.last().capturedAt.toShortCapturedAt(),
-                color = Slate,
-                style = MaterialTheme.typography.bodySmall
-            )
+        if (chartPoints.size >= 2) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = chartPoints.first().capturedAt.toShortCapturedAt(),
+                    color = Slate,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    text = "Low ${formatDebtCompact(minDebt)}",
+                    color = Slate,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    text = "High ${formatDebtCompact(maxDebt)}",
+                    color = Slate,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    text = chartPoints.last().capturedAt.toShortCapturedAt(),
+                    color = Slate,
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.End
+                )
+            }
         }
     }
 }
@@ -597,13 +599,6 @@ private fun formatDebtCompact(value: Double): String {
 
 private fun formatDebtExact(value: Double): String {
     return "$" + DecimalFormat("#,###").format(value)
-}
-
-private fun USDebtPoint.toShortCapturedAt(): String {
-    return capturedAt.toInstantOrNull()
-        ?.atZone(ZoneId.systemDefault())
-        ?.format(DateTimeFormatter.ofPattern("MM/dd HH:mm"))
-        ?: "--"
 }
 
 private fun String.toDisplayCapturedAt(): String {

@@ -37,13 +37,14 @@ class USDebtViewModel(application: Application) : AndroidViewModel(application) 
 
             val latestPoint = repository.refreshNationalDebt()
             val savedHistory = repository.getSavedHistory()
+            val fallbackPoint = savedHistory.lastOrNull()
 
             _history.value = savedHistory
-            _latest.value = latestPoint ?: savedHistory.lastOrNull()
-            _errorMessage.value = if (latestPoint == null && savedHistory.isEmpty()) {
-                "目前無法取得 US National Debt，請稍後再試。"
-            } else {
-                null
+            _latest.value = latestPoint ?: fallbackPoint
+            _errorMessage.value = when {
+                latestPoint != null -> null
+                fallbackPoint != null -> "目前無法取得最新 US National Debt，已先顯示上次成功抓取的資料。"
+                else -> "目前無法取得 US National Debt，請稍後再試。"
             }
             _isLoading.value = false
         }

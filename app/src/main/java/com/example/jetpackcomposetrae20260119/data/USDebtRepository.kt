@@ -60,29 +60,66 @@ class USDebtRepository(context: Context) {
             readTimeout = 20_000
             setRequestProperty(
                 "User-Agent",
-                "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Mobile Safari/537.36"
+                "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0 Mobile Safari/537.36"
             )
+            setRequestProperty("Accept-Language", "en-US,en;q=0.9")
             inputStream.bufferedReader().use { it.readText() }
         }
     }
 
     private fun parseNationalDebt(html: String): USDebtPoint? {
-        val elementId = Regex("""<div id="layer29"><span id="([A-Za-z0-9]+)">""")
-            .find(html)
-            ?.groupValues
-            ?.getOrNull(1)
-            ?: return null
+        val now = Instant.now()
+        val preferredElementId = findLayer29ElementId(html)
+        val candidates = parseScriptCandidates(html, now)
+        val bestCandidate = candidates.firstOrNull { it.elementId == preferredElementId }
+            ?: candidates.maxByOrNull { it.debt }
 
-        val marker = "document.getElementById('$elementId')"
-        val markerIndex = html.indexOf(marker)
-        if (markerIndex == -1) {
-            Log.w(TAG, "Unable to find script marker for $elementId")
+        if (bestCandidate == null) {
+            Log.w(TAG, "Unable to parse US national debt from current homepage")
             return null
         }
 
-        val searchStart = (markerIndex - 1200).coerceAtLeast(0)
-        val snippet = html.substring(searchStart, markerIndex + marker.length)
+        return USDebtPoint(
+            capturedAt = now.toString(),
+            debt = bestCandidate.debt
+        )
+    }
 
+    private fun findLayer29ElementId(html: String): String? {
+        val directMatch = Regex(
+            """<div[^>]*id\s*=\s*["']layer29["'][^>]*>.*?<span[^>]*id\s*=\s*["']([^"']+)["']""",
+            setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
+        ).find(html)
+
+        if (directMatch != null) {
+            return directMatch.groupValues[1]
+        }
+
+        return Regex("""#(X[A-Za-z0-9]+)\s*\{[^}]*font-size:\s*18pt""")
+            .find(html)
+            ?.groupValues
+            ?.getOrNull(1)
+    }
+
+    private fun parseScriptCandidates(html: String, now: Instant): List<DebtCandidate> {
+        val markerRegex = Regex(
+            """document\.getElementById\s*\(\s*['"]([A-Za-z0-9]+)['"]\s*\)\s*\.firstChild\.nodeValue\s*=\s*Assign"""
+        )
+
+        return markerRegex.findAll(html).mapNotNull { match ->
+            val elementId = match.groupValues[1]
+            val snippetStart = (match.range.first - 1800).coerceAtLeast(0)
+            val snippetEnd = (match.range.last + 200).coerceAtMost(html.lastIndex)
+            val snippet = html.substring(snippetStart, snippetEnd + 1)
+            parseCandidateFromSnippet(elementId, snippet, now)
+        }.toList()
+    }
+
+    private fun parseCandidateFromSnippet(
+        elementId: String,
+        snippet: String,
+        now: Instant
+    ): DebtCandidate? {
         val baseValue = Regex("""var\s+$elementId\s*=\s*([0-9]+(?:\.[0-9]+)?)\s*;""")
             .find(snippet)
             ?.groupValues
@@ -90,25 +127,44 @@ class USDebtRepository(context: Context) {
             ?.toDoubleOrNull()
             ?: return null
 
-        val ratePerSecond = Regex("""var\s+R3a45G7S\s*=\s*([0-9]+(?:\.[0-9]+)?)""")
+        val rateVariable = Regex("""var\s+Public\s*=\s*$elementId\s*\+\s*Method\s*\*\s*([A-Za-z0-9_]+)""")
+            .find(snippet)
+            ?.groupValues
+            ?.getOrNull(1)
+            ?: return null
+
+        val ratePerSecond = Regex("""var\s+$rateVariable\s*=\s*([0-9]+(?:\.[0-9]+)?)""")
             .find(snippet)
             ?.groupValues
             ?.getOrNull(1)
             ?.toDoubleOrNull()
             ?: return null
 
-        val anchorSeconds = Regex("""var\s+Y12[a-zA-Z0-9]*\s*=\s*([0-9]+(?:\.[0-9]+)?)""")
+        val anchorVariable = Regex("""var\s+Method\s*=\s*Class\.getTime\(\)\s*/\s*1000\s*-\s*([A-Za-z0-9_]+)""")
+            .find(snippet)
+            ?.groupValues
+            ?.getOrNull(1)
+            ?: return null
+
+        val anchorValue = Regex("""var\s+$anchorVariable\s*=\s*([0-9]+(?:\.[0-9]+)?)""")
             .find(snippet)
             ?.groupValues
             ?.getOrNull(1)
             ?.toDoubleOrNull()
             ?: return null
 
-        val now = Instant.now()
+        val anchorSeconds = when {
+            anchorValue < 1_000_000 -> anchorValue * 86_400.0
+            else -> anchorValue
+        }
+
         val debt = baseValue + (now.epochSecond - anchorSeconds) * ratePerSecond
+        if (!debt.isFinite() || debt <= 0 || debt < 100_000_000_000.0 || debt > 1_000_000_000_000_000.0) {
+            return null
+        }
 
-        return USDebtPoint(
-            capturedAt = now.toString(),
+        return DebtCandidate(
+            elementId = elementId,
             debt = debt
         )
     }
@@ -130,6 +186,11 @@ class USDebtRepository(context: Context) {
 
         prefs.edit().putString(HISTORY_KEY, array.toString()).apply()
     }
+
+    private data class DebtCandidate(
+        val elementId: String,
+        val debt: Double
+    )
 
     companion object {
         private const val TAG = "USDebtRepository"

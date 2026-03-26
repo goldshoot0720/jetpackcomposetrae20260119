@@ -16,7 +16,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
@@ -76,132 +77,77 @@ fun USDebtScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp),
-                    shape = RoundedCornerShape(30.dp),
-                    color = Porcelain
-                ) {
-                    Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)) {
-                        Text(
-                            text = "US Debt Clock",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Copper
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "追蹤 US National Debt，並把抓取結果累積成自己的走勢圖",
-                            style = MaterialTheme.typography.headlineLarge,
-                            color = Ink
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "資料根據 usdebtclock.org 首頁的即時欄位計算結果擷取，並保存在本機歷史中。",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Slate
-                        )
-                    }
-                }
+                SourceCard(
+                    isLoading = isLoading,
+                    onRefresh = viewModel::refreshNationalDebt
+                )
             }
 
             item {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp),
-                    shape = RoundedCornerShape(30.dp),
-                    color = Midnight
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "US National Debt",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = Fog.copy(alpha = 0.72f)
-                                )
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = latest?.let { formatDebtCompact(it.debt) } ?: "--",
-                                    style = MaterialTheme.typography.displayMedium,
-                                    color = Fog
-                                )
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = latest?.let { formatDebtExact(it.debt) } ?: "--",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Fog.copy(alpha = 0.72f)
-                                )
-                            }
+                if (latest != null) {
+                    LatestDebtCard(
+                        latest = latest!!,
+                        sampleCount = history.size,
+                        isLoading = isLoading,
+                        onRefresh = viewModel::refreshNationalDebt
+                    )
+                } else {
+                    EmptyDebtState(
+                        errorMessage = errorMessage,
+                        isLoading = isLoading,
+                        onRefresh = viewModel::refreshNationalDebt
+                    )
+                }
+            }
 
-                            Surface(
-                                shape = CircleShape,
-                                color = Fog.copy(alpha = 0.08f),
-                                modifier = Modifier.size(56.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Default.DateRange,
-                                        contentDescription = null,
-                                        tint = Copper
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        DebtMetaRow("最後同步", latest?.let { USDebtRepository.formatCapturedAt(it.capturedAt) } ?: "--")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        DebtMetaRow("樣本數", history.size.toString())
-                        Spacer(modifier = Modifier.height(8.dp))
-                        DebtMetaRow("來源", "usdebtclock.org")
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        FilledTonalButton(
-                            onClick = viewModel::refreshNationalDebt,
-                            enabled = !isLoading,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = null
+            if (history.size >= 2) {
+                item {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp),
+                        shape = RoundedCornerShape(30.dp),
+                        color = Porcelain
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text(
+                                text = "歷史走勢",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = Ink
                             )
-                            Spacer(modifier = Modifier.size(8.dp))
-                            Text(text = if (isLoading) "同步中..." else "更新 US Debt")
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "圖表顯示的是本機累積的抓取點，不是官方歷史資料回補。",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Slate
+                            )
+                            Spacer(modifier = Modifier.height(18.dp))
+                            USDebtChart(history = history)
                         }
                     }
                 }
-            }
-
-            item {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp),
-                    shape = RoundedCornerShape(30.dp),
-                    color = Porcelain
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = "歷史走勢",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = Ink
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "圖表顯示的是本機累積的抓取點，不是官方歷史資料回補。",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Slate
-                        )
-                        Spacer(modifier = Modifier.height(18.dp))
-                        USDebtChart(history = history)
+            } else {
+                item {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp),
+                        shape = RoundedCornerShape(30.dp),
+                        color = Porcelain
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text(
+                                text = "歷史走勢",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = Ink
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "還沒有足夠的 US Debt 歷史樣本，至少要成功抓取兩次才會開始畫圖。",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Slate
+                            )
+                        }
                     }
                 }
             }
@@ -236,7 +182,7 @@ fun USDebtScreen(
                     ) {
                         Column(modifier = Modifier.padding(20.dp)) {
                             Text(
-                                text = "最近樣本",
+                                text = "近期樣本",
                                 style = MaterialTheme.typography.titleLarge,
                                 color = Ink
                             )
@@ -260,11 +206,209 @@ fun USDebtScreen(
             }
         }
 
-        if (isLoading && history.isEmpty()) {
+        if (isLoading && latest == null && history.isEmpty()) {
             CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center),
                 color = Copper
             )
+        }
+    }
+}
+
+@Composable
+private fun SourceCard(
+    isLoading: Boolean,
+    onRefresh: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+        shape = RoundedCornerShape(30.dp),
+        color = Porcelain
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)) {
+            Text(
+                text = "US Debt Clock",
+                style = MaterialTheme.typography.labelMedium,
+                color = Copper
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "追蹤 US National Debt 的即時估算值",
+                style = MaterialTheme.typography.headlineLarge,
+                color = Ink
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "資料來源是 usdebtclock.org 首頁頁面，並非官方 API。若網站結構變動，抓取可能暫時失敗。",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Slate
+            )
+            Spacer(modifier = Modifier.height(18.dp))
+
+            FilledTonalButton(
+                onClick = onRefresh,
+                enabled = !isLoading,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(text = if (isLoading) "抓取中..." else "重新抓取")
+            }
+        }
+    }
+}
+
+@Composable
+private fun LatestDebtCard(
+    latest: USDebtPoint,
+    sampleCount: Int,
+    isLoading: Boolean,
+    onRefresh: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+        shape = RoundedCornerShape(30.dp),
+        color = Midnight
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "US National Debt",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Fog.copy(alpha = 0.72f)
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = formatDebtCompact(latest.debt),
+                        style = MaterialTheme.typography.displayMedium,
+                        color = Fog
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = formatDebtExact(latest.debt),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Fog.copy(alpha = 0.72f)
+                    )
+                }
+
+                Surface(
+                    shape = CircleShape,
+                    color = Fog.copy(alpha = 0.08f),
+                    modifier = Modifier.size(56.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Public,
+                            contentDescription = null,
+                            tint = Copper
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            DebtMetaRow("最後更新", USDebtRepository.formatCapturedAt(latest.capturedAt))
+            Spacer(modifier = Modifier.height(8.dp))
+            DebtMetaRow("歷史樣本", sampleCount.toString())
+            Spacer(modifier = Modifier.height(8.dp))
+            DebtMetaRow("資料來源", "usdebtclock.org")
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            FilledTonalButton(
+                onClick = onRefresh,
+                enabled = !isLoading,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(text = if (isLoading) "抓取中..." else "重新抓取")
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyDebtState(
+    errorMessage: String?,
+    isLoading: Boolean,
+    onRefresh: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+        shape = RoundedCornerShape(30.dp),
+        color = Porcelain
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    shape = CircleShape,
+                    color = Fog,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = Copper
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.size(12.dp))
+                Column {
+                    Text(
+                        text = "尚未取得資料",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Ink
+                    )
+                    Text(
+                        text = "先重新抓取一次 US National Debt",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Slate
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = errorMessage ?: "目前還沒有可用的 US Debt 資料。",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Slate
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            FilledTonalButton(
+                onClick = onRefresh,
+                enabled = !isLoading,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(text = if (isLoading) "抓取中..." else "重新抓取")
+            }
         }
     }
 }
@@ -291,21 +435,6 @@ private fun DebtMetaRow(label: String, value: String) {
 
 @Composable
 private fun USDebtChart(history: List<USDebtPoint>) {
-    if (history.isEmpty()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(220.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "還沒有足夠的 US Debt 歷史樣本",
-                color = Slate
-            )
-        }
-        return
-    }
-
     val chartPoints = history.takeLast(40)
     val values = chartPoints.map { it.debt }
     val minDebt = values.minOrNull() ?: 0.0

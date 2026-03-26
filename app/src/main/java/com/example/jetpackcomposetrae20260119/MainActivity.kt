@@ -16,10 +16,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,8 +24,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -68,10 +65,6 @@ import com.example.jetpackcomposetrae20260119.ui.theme.Midnight
 import com.example.jetpackcomposetrae20260119.ui.theme.Mist
 import com.example.jetpackcomposetrae20260119.worker.NotificationWorker
 import com.example.jetpackcomposetrae20260119.worker.WorkerScheduler
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     private val subscriptionViewModel: SubscriptionViewModel by viewModels()
@@ -133,7 +126,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HomeScreen(
     subscriptionViewModel: SubscriptionViewModel,
@@ -144,39 +136,31 @@ private fun HomeScreen(
     val subscriptions by subscriptionViewModel.subscriptions.collectAsState()
     val upcoming by subscriptionViewModel.upcomingSubscriptions.collectAsState()
     val latestOil by oilPriceViewModel.latest.collectAsState()
-    val latestDebt by usDebtViewModel.latest.collectAsState()
 
     val tabs = listOf(
         HomeTab("訂閱總覽", "Renewals", Icons.AutoMirrored.Filled.List),
-        HomeTab("油價監測", "Oil Tracker", Icons.Default.Refresh),
+        HomeTab("油價監測", "Oil", Icons.Default.Refresh),
         HomeTab("美債時鐘", "US Debt", Icons.Default.DateRange)
     )
 
-    BoxWithConstraints(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Mist)
     ) {
-        val isCompact = maxWidth < 430.dp
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .padding(horizontal = if (isCompact) 14.dp else 18.dp, vertical = 14.dp)
+                .padding(horizontal = 18.dp, vertical = 14.dp)
         ) {
             Surface(
-                shape = RoundedCornerShape(if (isCompact) 30.dp else 34.dp),
+                shape = RoundedCornerShape(34.dp),
                 color = Midnight,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(
-                    modifier = Modifier.padding(
-                        horizontal = if (isCompact) 18.dp else 22.dp,
-                        vertical = if (isCompact) 20.dp else 22.dp
-                    )
-                ) {
+                Column(modifier = Modifier.padding(horizontal = 22.dp, vertical = 22.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -190,17 +174,13 @@ private fun HomeScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "掌握訂閱、油價與美國債務的即時脈動",
-                                style = if (isCompact) {
-                                    MaterialTheme.typography.displaySmall
-                                } else {
-                                    MaterialTheme.typography.displayMedium
-                                },
+                                text = "用更清楚的視角追蹤續訂壓力與市場價格",
+                                style = MaterialTheme.typography.displaySmall,
                                 color = Fog
                             )
                             Spacer(modifier = Modifier.height(10.dp))
                             Text(
-                                text = "在同一個首頁快速查看續訂提醒、最新油價與 US National Debt，重要變化一眼就能追上。",
+                                text = "首頁先給摘要，再進入細節畫面，減少閱讀切換成本。",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Fog.copy(alpha = 0.74f)
                             )
@@ -209,46 +189,34 @@ private fun HomeScreen(
                         Surface(
                             shape = CircleShape,
                             color = Fog.copy(alpha = 0.08f),
-                            modifier = Modifier.padding(start = 14.dp)
+                            modifier = Modifier.padding(start = 16.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
                                 contentDescription = null,
                                 tint = Copper,
-                                modifier = Modifier.padding(if (isCompact) 12.dp else 14.dp)
+                                modifier = Modifier.padding(14.dp)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(22.dp))
 
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
+                    Row(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        maxItemsInEachRow = if (isCompact) 2 else 3
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         HeroMetric(
-                            label = "訂閱數量",
+                            label = "訂閱數",
                             value = subscriptions.size.toString(),
-                            note = if (upcoming.isEmpty()) {
-                                "目前沒有即將到期項目"
-                            } else {
-                                "${upcoming.size} 個項目即將續訂"
-                            },
-                            modifier = if (isCompact) Modifier.fillMaxWidth(0.48f) else Modifier.fillMaxWidth(0.31f)
+                            note = if (upcoming.isEmpty()) "近期穩定" else "${upcoming.size} 筆即將到期",
+                            modifier = Modifier.weight(1f)
                         )
                         HeroMetric(
                             label = "最新油價",
                             value = latestOil?.let { "$${"%.2f".format(it.price)}" } ?: "--",
-                            note = latestOil?.displayDate ?: "尚未同步資料",
-                            modifier = if (isCompact) Modifier.fillMaxWidth(0.48f) else Modifier.fillMaxWidth(0.31f)
-                        )
-                        HeroMetric(
-                            label = "US Debt",
-                            value = latestDebt?.let { formatDebtCompact(it.debt) } ?: "--",
-                            note = latestDebt?.capturedAt?.toHomeCapturedAt() ?: "尚未同步資料",
-                            modifier = if (isCompact) Modifier.fillMaxWidth() else Modifier.fillMaxWidth(0.31f)
+                            note = latestOil?.displayDate ?: "等待同步",
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
@@ -256,17 +224,25 @@ private fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+            Surface(
+                shape = RoundedCornerShape(26.dp),
+                color = Fog,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                tabs.forEachIndexed { index, tab ->
-                    DashboardTab(
-                        tab = tab,
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    tabs.forEachIndexed { index, tab ->
+                        DashboardTab(
+                            tab = tab,
+                            selected = selectedTab == index,
+                            onClick = { selectedTab = index },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
 
@@ -305,32 +281,29 @@ private fun DashboardTab(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(20.dp),
         color = if (selected) Midnight else Fog,
         modifier = modifier
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 18.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                .padding(horizontal = 14.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
                 shape = CircleShape,
-                color = if (selected) Copper.copy(alpha = 0.18f) else Cloud.copy(alpha = 0.35f),
-                modifier = Modifier.size(56.dp)
+                color = if (selected) Copper.copy(alpha = 0.18f) else Cloud.copy(alpha = 0.35f)
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = tab.icon,
-                        contentDescription = tab.title,
-                        tint = if (selected) Copper else Ink
-                    )
-                }
+                Icon(
+                    imageVector = tab.icon,
+                    contentDescription = tab.title,
+                    tint = if (selected) Copper else Ink,
+                    modifier = Modifier.padding(10.dp)
+                )
             }
-
-            Column(modifier = Modifier.weight(1f)) {
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
                 Text(
                     text = tab.eyebrow,
                     style = MaterialTheme.typography.labelMedium,
@@ -338,10 +311,9 @@ private fun DashboardTab(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = tab.title,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     color = if (selected) Fog else Ink,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -367,17 +339,13 @@ private fun HeroMetric(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = Fog.copy(alpha = 0.72f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                color = Fog.copy(alpha = 0.72f)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = value,
                 style = MaterialTheme.typography.headlineLarge,
-                color = Fog,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                color = Fog
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
@@ -387,16 +355,4 @@ private fun HeroMetric(
             )
         }
     }
-}
-
-private fun formatDebtCompact(value: Double): String {
-    return String.format(Locale.US, "$%.2fT", value / 1_000_000_000_000.0)
-}
-
-private fun String.toHomeCapturedAt(): String {
-    return runCatching {
-        Instant.parse(this)
-            .atZone(ZoneId.systemDefault())
-            .format(DateTimeFormatter.ofPattern("MM/dd HH:mm"))
-    }.getOrDefault("尚未同步")
 }

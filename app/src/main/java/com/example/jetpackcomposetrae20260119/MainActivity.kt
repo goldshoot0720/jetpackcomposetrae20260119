@@ -149,7 +149,7 @@ private fun HomeScreen(
 
     val tabs = listOf(
         HomeTab("訂閱總覽", "Renewals", Icons.AutoMirrored.Filled.List),
-        HomeTab("油價監測", "Oil", Icons.Default.Refresh),
+        HomeTab("油價監測", "Oil Tracker", Icons.Default.Refresh),
         HomeTab("美債時鐘", "US Debt", Icons.Default.DateRange)
     )
 
@@ -237,31 +237,19 @@ private fun HomeScreen(
                             } else {
                                 "${upcoming.size} 個項目即將續訂"
                             },
-                            modifier = if (isCompact) {
-                                Modifier.fillMaxWidth(0.48f)
-                            } else {
-                                Modifier.fillMaxWidth(0.31f)
-                            }
+                            modifier = if (isCompact) Modifier.fillMaxWidth(0.48f) else Modifier.fillMaxWidth(0.31f)
                         )
                         HeroMetric(
                             label = "最新油價",
                             value = latestOil?.let { "$${"%.2f".format(it.price)}" } ?: "--",
                             note = latestOil?.displayDate ?: "尚未同步資料",
-                            modifier = if (isCompact) {
-                                Modifier.fillMaxWidth(0.48f)
-                            } else {
-                                Modifier.fillMaxWidth(0.31f)
-                            }
+                            modifier = if (isCompact) Modifier.fillMaxWidth(0.48f) else Modifier.fillMaxWidth(0.31f)
                         )
                         HeroMetric(
                             label = "US Debt",
                             value = latestDebt?.let { formatDebtCompact(it.debt) } ?: "--",
                             note = latestDebt?.capturedAt?.toHomeCapturedAt() ?: "尚未同步資料",
-                            modifier = if (isCompact) {
-                                Modifier.fillMaxWidth()
-                            } else {
-                                Modifier.fillMaxWidth(0.31f)
-                            }
+                            modifier = if (isCompact) Modifier.fillMaxWidth() else Modifier.fillMaxWidth(0.31f)
                         )
                     }
                 }
@@ -269,23 +257,16 @@ private fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            FlowRow(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                maxItemsInEachRow = if (isCompact) 2 else 3
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 tabs.forEachIndexed { index, tab ->
                     DashboardTab(
                         tab = tab,
                         selected = selectedTab == index,
                         onClick = { selectedTab = index },
-                        compact = isCompact,
-                        modifier = if (isCompact) {
-                            if (index == tabs.lastIndex) Modifier.fillMaxWidth() else Modifier.fillMaxWidth(0.48f)
-                        } else {
-                            Modifier.fillMaxWidth(0.31f)
-                        }
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
@@ -318,34 +299,36 @@ private fun DashboardTab(
     tab: HomeTab,
     selected: Boolean,
     onClick: () -> Unit,
-    compact: Boolean,
     modifier: Modifier = Modifier
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(if (compact) 24.dp else 20.dp),
+        shape = RoundedCornerShape(28.dp),
         color = if (selected) Midnight else Fog,
         modifier = modifier
     ) {
-        if (compact) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                horizontalAlignment = Alignment.Start
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 18.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = if (selected) Copper.copy(alpha = 0.18f) else Cloud.copy(alpha = 0.35f),
+                modifier = Modifier.size(56.dp)
             ) {
-                Surface(
-                    shape = CircleShape,
-                    color = if (selected) Copper.copy(alpha = 0.18f) else Cloud.copy(alpha = 0.35f)
-                ) {
+                Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = tab.icon,
                         contentDescription = tab.title,
-                        tint = if (selected) Copper else Ink,
-                        modifier = Modifier.padding(10.dp)
+                        tint = if (selected) Copper else Ink
                     )
                 }
-                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = tab.eyebrow,
                     style = MaterialTheme.typography.labelMedium,
@@ -361,42 +344,6 @@ private fun DashboardTab(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-            }
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    shape = CircleShape,
-                    color = if (selected) Copper.copy(alpha = 0.18f) else Cloud.copy(alpha = 0.35f)
-                ) {
-                    Icon(
-                        imageVector = tab.icon,
-                        contentDescription = tab.title,
-                        tint = if (selected) Copper else Ink,
-                        modifier = Modifier.padding(10.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = tab.eyebrow,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = if (selected) Fog.copy(alpha = 0.68f) else Midnight.copy(alpha = 0.62f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = tab.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = if (selected) Fog else Ink,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
             }
         }
     }

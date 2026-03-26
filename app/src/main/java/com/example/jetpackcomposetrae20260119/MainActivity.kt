@@ -30,7 +30,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -53,6 +53,8 @@ import com.example.jetpackcomposetrae20260119.ui.OilMonitoringScreen
 import com.example.jetpackcomposetrae20260119.ui.OilPriceViewModel
 import com.example.jetpackcomposetrae20260119.ui.SubscriptionScreen
 import com.example.jetpackcomposetrae20260119.ui.SubscriptionViewModel
+import com.example.jetpackcomposetrae20260119.ui.USDebtScreen
+import com.example.jetpackcomposetrae20260119.ui.USDebtViewModel
 import com.example.jetpackcomposetrae20260119.ui.theme.Cloud
 import com.example.jetpackcomposetrae20260119.ui.theme.Copper
 import com.example.jetpackcomposetrae20260119.ui.theme.Fog
@@ -62,10 +64,15 @@ import com.example.jetpackcomposetrae20260119.ui.theme.Midnight
 import com.example.jetpackcomposetrae20260119.ui.theme.Mist
 import com.example.jetpackcomposetrae20260119.worker.NotificationWorker
 import com.example.jetpackcomposetrae20260119.worker.WorkerScheduler
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
-    private val viewModel: SubscriptionViewModel by viewModels()
+    private val subscriptionViewModel: SubscriptionViewModel by viewModels()
     private val oilPriceViewModel: OilPriceViewModel by viewModels()
+    private val usDebtViewModel: USDebtViewModel by viewModels()
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -90,8 +97,9 @@ class MainActivity : ComponentActivity() {
                     color = Mist
                 ) {
                     HomeScreen(
-                        subscriptionViewModel = viewModel,
-                        oilPriceViewModel = oilPriceViewModel
+                        subscriptionViewModel = subscriptionViewModel,
+                        oilPriceViewModel = oilPriceViewModel,
+                        usDebtViewModel = usDebtViewModel
                     )
                 }
             }
@@ -124,16 +132,19 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun HomeScreen(
     subscriptionViewModel: SubscriptionViewModel,
-    oilPriceViewModel: OilPriceViewModel
+    oilPriceViewModel: OilPriceViewModel,
+    usDebtViewModel: USDebtViewModel
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     val subscriptions by subscriptionViewModel.subscriptions.collectAsState()
     val upcoming by subscriptionViewModel.upcomingSubscriptions.collectAsState()
-    val latest by oilPriceViewModel.latest.collectAsState()
+    val latestOil by oilPriceViewModel.latest.collectAsState()
+    val latestDebt by usDebtViewModel.latest.collectAsState()
 
     val tabs = listOf(
         HomeTab("訂閱總覽", "Renewals", Icons.AutoMirrored.Filled.List),
-        HomeTab("油價監測", "OQD Tracker", Icons.Default.Refresh)
+        HomeTab("油價監測", "OQD Tracker", Icons.Default.Refresh),
+        HomeTab("US Debt", "Debt Clock", Icons.Default.DateRange)
     )
 
     Box(
@@ -167,13 +178,13 @@ private fun HomeScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "用更清楚的視角追蹤續訂壓力與市場價格",
+                                text = "掌握訂閱、油價與美國債務的即時脈動",
                                 style = MaterialTheme.typography.displayMedium,
                                 color = Fog
                             )
                             Spacer(modifier = Modifier.height(10.dp))
                             Text(
-                                text = "首頁先給摘要，再進入細節畫面，減少閱讀切換成本。",
+                                text = "在同一個首頁快速查看續訂提醒、最新油價與 US National Debt，讓重要變化一眼就能追上。",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Fog.copy(alpha = 0.74f)
                             )
@@ -200,15 +211,25 @@ private fun HomeScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         HeroMetric(
-                            label = "訂閱數",
+                            label = "訂閱數量",
                             value = subscriptions.size.toString(),
-                            note = if (upcoming.isEmpty()) "近期穩定" else "${upcoming.size} 筆即將到期",
+                            note = if (upcoming.isEmpty()) {
+                                "目前沒有即將到期項目"
+                            } else {
+                                "${upcoming.size} 個項目即將續訂"
+                            },
                             modifier = Modifier.weight(1f)
                         )
                         HeroMetric(
                             label = "最新油價",
-                            value = latest?.let { "$${"%.2f".format(it.price)}" } ?: "--",
-                            note = latest?.displayDate ?: "等待同步",
+                            value = latestOil?.let { "$${"%.2f".format(it.price)}" } ?: "--",
+                            note = latestOil?.displayDate ?: "尚未同步資料",
+                            modifier = Modifier.weight(1f)
+                        )
+                        HeroMetric(
+                            label = "US Debt",
+                            value = latestDebt?.let { formatDebtCompact(it.debt) } ?: "--",
+                            note = latestDebt?.capturedAt?.toHomeCapturedAt() ?: "尚未同步資料",
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -248,7 +269,8 @@ private fun HomeScreen(
             ) { tabIndex ->
                 when (tabIndex) {
                     0 -> SubscriptionScreen(subscriptionViewModel)
-                    else -> OilMonitoringScreen(oilPriceViewModel)
+                    1 -> OilMonitoringScreen(oilPriceViewModel)
+                    else -> USDebtScreen(usDebtViewModel)
                 }
             }
         }
@@ -340,4 +362,16 @@ private fun HeroMetric(
             )
         }
     }
+}
+
+private fun formatDebtCompact(value: Double): String {
+    return String.format(Locale.US, "$%.2fT", value / 1_000_000_000_000.0)
+}
+
+private fun String.toHomeCapturedAt(): String {
+    return runCatching {
+        Instant.parse(this)
+            .atZone(ZoneId.systemDefault())
+            .format(DateTimeFormatter.ofPattern("MM/dd HH:mm"))
+    }.getOrDefault("尚未同步")
 }

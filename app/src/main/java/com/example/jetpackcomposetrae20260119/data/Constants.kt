@@ -8,4 +8,5 @@ object Constants {
     const val SUBSCRIPTION_COLLECTION_ID = "69b24465002d43df9b00"
     const val SUBSCRIPTION_COLLECTION_NAME = "subscription"
     const val OIL_PRICE_URL = "https://www.gulfmerc.com/"
+    const val US_DEBT_URL = "https://www.usdebtclock.org/"
 }

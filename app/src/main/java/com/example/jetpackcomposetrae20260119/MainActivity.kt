@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -276,7 +275,10 @@ private fun HomeScreen(
             AnimatedContent(
                 targetState = selectedTab,
                 transitionSpec = { fadeIn() togetherWith fadeOut() },
-                label = "home_content"
+                label = "home_content",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             ) { tabIndex ->
                 when (tabIndex) {
                     0 -> SubscriptionScreen(subscriptionViewModel)

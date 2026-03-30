@@ -1,4 +1,4 @@
-package com.example.jetpackcomposetrae20260119
+﻿package com.example.jetpackcomposetrae20260119
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
@@ -48,6 +49,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.example.jetpackcomposetrae20260119.ui.LotteryComparisonScreen
+import com.example.jetpackcomposetrae20260119.ui.LotteryComparisonViewModel
 import com.example.jetpackcomposetrae20260119.ui.OilMonitoringScreen
 import com.example.jetpackcomposetrae20260119.ui.OilPriceViewModel
 import com.example.jetpackcomposetrae20260119.ui.SubscriptionScreen
@@ -68,6 +71,7 @@ class MainActivity : ComponentActivity() {
     private val subscriptionViewModel: SubscriptionViewModel by viewModels()
     private val oilPriceViewModel: OilPriceViewModel by viewModels()
     private val usDebtViewModel: USDebtViewModel by viewModels()
+    private val lotteryComparisonViewModel: LotteryComparisonViewModel by viewModels()
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -94,7 +98,8 @@ class MainActivity : ComponentActivity() {
                     HomeScreen(
                         subscriptionViewModel = subscriptionViewModel,
                         oilPriceViewModel = oilPriceViewModel,
-                        usDebtViewModel = usDebtViewModel
+                        usDebtViewModel = usDebtViewModel,
+                        lotteryComparisonViewModel = lotteryComparisonViewModel
                     )
                 }
             }
@@ -128,14 +133,16 @@ class MainActivity : ComponentActivity() {
 private fun HomeScreen(
     subscriptionViewModel: SubscriptionViewModel,
     oilPriceViewModel: OilPriceViewModel,
-    usDebtViewModel: USDebtViewModel
+    usDebtViewModel: USDebtViewModel,
+    lotteryComparisonViewModel: LotteryComparisonViewModel
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 
     val tabs = listOf(
-        HomeTab("訂閱", "Renewals", Icons.AutoMirrored.Filled.List),
-        HomeTab("油價", "Oil", Icons.Default.Refresh),
-        HomeTab("美債", "US Debt", Icons.Default.DateRange)
+        HomeTab("訂閱提醒", "Renewals", Icons.AutoMirrored.Filled.List),
+        HomeTab("油價觀測", "Oil", Icons.Default.Refresh),
+        HomeTab("美債追蹤", "US Debt", Icons.Default.DateRange),
+        HomeTab("最瞎結婚理由", "Lottery", Icons.Default.Info)
     )
 
     Column(
@@ -158,7 +165,7 @@ private fun HomeScreen(
                     color = Midnight.copy(alpha = 0.68f)
                 )
                 Text(
-                    text = "選單列",
+                    text = "生活資料儀表板",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Ink
                 )
@@ -171,7 +178,7 @@ private fun HomeScreen(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = Icons.Default.Refresh,
+                        imageVector = Icons.Default.Info,
                         contentDescription = null,
                         tint = Copper
                     )
@@ -206,7 +213,7 @@ private fun HomeScreen(
         Spacer(modifier = Modifier.padding(top = 14.dp))
 
         Text(
-            text = "內容展示",
+            text = "選擇想查看的資料卡",
             style = MaterialTheme.typography.labelLarge,
             color = Midnight.copy(alpha = 0.62f)
         )
@@ -222,7 +229,8 @@ private fun HomeScreen(
             when (tabIndex) {
                 0 -> SubscriptionScreen(subscriptionViewModel)
                 1 -> OilMonitoringScreen(oilPriceViewModel)
-                else -> USDebtScreen(usDebtViewModel)
+                2 -> USDebtScreen(usDebtViewModel)
+                else -> LotteryComparisonScreen(lotteryComparisonViewModel)
             }
         }
     }

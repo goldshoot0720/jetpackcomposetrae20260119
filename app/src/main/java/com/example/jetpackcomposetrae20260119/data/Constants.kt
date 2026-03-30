@@ -9,4 +9,5 @@ object Constants {
     const val SUBSCRIPTION_COLLECTION_NAME = "subscription"
     const val OIL_PRICE_URL = "https://www.gulfmerc.com/"
     const val US_DEBT_URL = "https://www.usdebtclock.org/"
+    const val TAIWAN_LOTTERY_API_BASE = "https://api.taiwanlottery.com/TLCAPIWeB"
 }

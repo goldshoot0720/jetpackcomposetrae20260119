@@ -70,15 +70,13 @@ class USDebtRepository(context: Context) {
     private fun parseNationalDebt(html: String): USDebtPoint? {
         val now = Instant.now()
         val preferredElementId = findLayer29ElementId(html)
-            ?: run {
-                Log.w(TAG, "Unable to locate layer29 debt element on current homepage")
-                return null
-            }
         val candidates = parseScriptCandidates(html, now)
-        val bestCandidate = candidates.firstOrNull { it.elementId == preferredElementId }
+        val bestCandidate = preferredElementId?.let { preferredId ->
+            candidates.firstOrNull { it.elementId == preferredId }
+        } ?: candidates.maxByOrNull { it.debt }
 
         if (bestCandidate == null) {
-            Log.w(TAG, "Unable to parse US national debt from preferred element: $preferredElementId")
+            Log.w(TAG, "Unable to parse US national debt from current homepage")
             return null
         }
 
@@ -123,34 +121,38 @@ class USDebtRepository(context: Context) {
         snippet: String,
         now: Instant
     ): DebtCandidate? {
+        val normalizedSnippet = snippet
+            .replace(Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL), " ")
+            .replace(Regex("""\s+"""), " ")
+
         val baseValue = Regex("""var\s+$elementId\s*=\s*([0-9]+(?:\.[0-9]+)?)\s*;""")
-            .find(snippet)
+            .find(normalizedSnippet)
             ?.groupValues
             ?.getOrNull(1)
             ?.toDoubleOrNull()
             ?: return null
 
         val rateVariable = Regex("""var\s+Public\s*=\s*$elementId\s*\+\s*Method\s*\*\s*([A-Za-z0-9_]+)""")
-            .find(snippet)
+            .find(normalizedSnippet)
             ?.groupValues
             ?.getOrNull(1)
             ?: return null
 
         val ratePerSecond = Regex("""var\s+$rateVariable\s*=\s*([0-9]+(?:\.[0-9]+)?)""")
-            .find(snippet)
+            .find(normalizedSnippet)
             ?.groupValues
             ?.getOrNull(1)
             ?.toDoubleOrNull()
             ?: return null
 
         val anchorVariable = Regex("""var\s+Method\s*=\s*Class\.getTime\(\)\s*/\s*1000\s*-\s*([A-Za-z0-9_]+)""")
-            .find(snippet)
+            .find(normalizedSnippet)
             ?.groupValues
             ?.getOrNull(1)
             ?: return null
 
         val anchorValue = Regex("""var\s+$anchorVariable\s*=\s*([0-9]+(?:\.[0-9]+)?)""")
-            .find(snippet)
+            .find(normalizedSnippet)
             ?.groupValues
             ?.getOrNull(1)
             ?.toDoubleOrNull()

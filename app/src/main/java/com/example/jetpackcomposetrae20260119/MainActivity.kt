@@ -10,9 +10,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,6 +49,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -59,6 +68,7 @@ import com.example.jetpackcomposetrae20260119.ui.USDebtScreen
 import com.example.jetpackcomposetrae20260119.ui.USDebtViewModel
 import com.example.jetpackcomposetrae20260119.ui.theme.Cloud
 import com.example.jetpackcomposetrae20260119.ui.theme.Copper
+import com.example.jetpackcomposetrae20260119.ui.theme.CopperGlow
 import com.example.jetpackcomposetrae20260119.ui.theme.Fog
 import com.example.jetpackcomposetrae20260119.ui.theme.Ink
 import com.example.jetpackcomposetrae20260119.ui.theme.Jetpackcomposetrae20260119Theme
@@ -66,6 +76,7 @@ import com.example.jetpackcomposetrae20260119.ui.theme.Midnight
 import com.example.jetpackcomposetrae20260119.ui.theme.Mist
 import com.example.jetpackcomposetrae20260119.worker.NotificationWorker
 import com.example.jetpackcomposetrae20260119.worker.WorkerScheduler
+import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
     private val subscriptionViewModel: SubscriptionViewModel by viewModels()
@@ -137,6 +148,8 @@ private fun HomeScreen(
     lotteryComparisonViewModel: LotteryComparisonViewModel
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    val today = LocalDate.now()
+    val showBirthdayEasterEgg = today.monthValue == 4 && today.dayOfMonth == 3
 
     val tabs = listOf(
         HomeTab("訂閱提醒", "Renewals", Icons.AutoMirrored.Filled.List),
@@ -188,6 +201,11 @@ private fun HomeScreen(
 
         Spacer(modifier = Modifier.padding(top = 14.dp))
 
+        if (showBirthdayEasterEgg) {
+            BirthdayEasterEggCard()
+            Spacer(modifier = Modifier.padding(top = 14.dp))
+        }
+
         Surface(
             shape = RoundedCornerShape(24.dp),
             color = Fog,
@@ -231,6 +249,95 @@ private fun HomeScreen(
                 1 -> OilMonitoringScreen(oilPriceViewModel)
                 2 -> USDebtScreen(usDebtViewModel)
                 else -> LotteryComparisonScreen(lotteryComparisonViewModel)
+            }
+        }
+    }
+}
+
+@Composable
+private fun BirthdayEasterEggCard() {
+    val transition = rememberInfiniteTransition(label = "birthday_card")
+    val glowAlpha by transition.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0.9f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1500),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow_alpha"
+    )
+    val shimmerShift by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2600),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "shimmer_shift"
+    )
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(30.dp),
+        color = Color.Transparent
+    ) {
+        Box(
+            modifier = Modifier
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            CopperGlow.copy(alpha = 0.95f),
+                            Color(0xFFF8D76A),
+                            Color(0xFFFFF3C2)
+                        ),
+                        start = Offset.Zero,
+                        end = Offset(900f, 320f)
+                    ),
+                    shape = RoundedCornerShape(30.dp)
+                )
+                .padding(horizontal = 20.dp, vertical = 18.dp)
+        ) {
+            Canvas(modifier = Modifier.matchParentSize()) {
+                drawCircle(
+                    color = Color.White.copy(alpha = glowAlpha * 0.22f),
+                    radius = size.minDimension * 0.24f,
+                    center = Offset(size.width * (0.18f + shimmerShift * 0.06f), size.height * 0.26f)
+                )
+                drawCircle(
+                    color = Copper.copy(alpha = glowAlpha * 0.18f),
+                    radius = size.minDimension * 0.32f,
+                    center = Offset(size.width * 0.88f, size.height * (0.18f + shimmerShift * 0.10f))
+                )
+                drawCircle(
+                    color = Color.White.copy(alpha = glowAlpha * 0.16f),
+                    radius = size.minDimension * 0.18f,
+                    center = Offset(size.width * 0.72f, size.height * 0.78f)
+                )
+            }
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "4/3 限定彩蛋",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Midnight.copy(alpha = 0.78f)
+                )
+                Text(
+                    text = "塗哥生日快樂",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Midnight
+                )
+                Text(
+                    text = "今彩539頭獎得主鋒兄",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Ink
+                )
+                Text(
+                    text = "今天首頁自動開啟生日特效，祝福與好手氣一起加倍。",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Midnight.copy(alpha = 0.8f)
+                )
             }
         }
     }

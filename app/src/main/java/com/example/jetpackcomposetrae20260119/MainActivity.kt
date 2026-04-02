@@ -149,7 +149,7 @@ private fun HomeScreen(
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     val today = LocalDate.now()
-    val showBirthdayEasterEgg = today.monthValue == 4 && today.dayOfMonth == 3
+    val birthdayEasterEgg = rememberBirthdayEasterEgg(today)
 
     val tabs = listOf(
         HomeTab("訂閱提醒", "Renewals", Icons.AutoMirrored.Filled.List),
@@ -201,8 +201,8 @@ private fun HomeScreen(
 
         Spacer(modifier = Modifier.padding(top = 14.dp))
 
-        if (showBirthdayEasterEgg) {
-            BirthdayEasterEggCard()
+        if (birthdayEasterEgg != null) {
+            BirthdayEasterEggCard(birthdayEasterEgg)
             Spacer(modifier = Modifier.padding(top = 14.dp))
         }
 
@@ -255,7 +255,7 @@ private fun HomeScreen(
 }
 
 @Composable
-private fun BirthdayEasterEggCard() {
+private fun BirthdayEasterEggCard(easterEgg: BirthdayEasterEgg) {
     val transition = rememberInfiniteTransition(label = "birthday_card")
     val glowAlpha by transition.animateFloat(
         initialValue = 0.35f,
@@ -319,27 +319,52 @@ private fun BirthdayEasterEggCard() {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "4/3 限定彩蛋",
+                    text = easterEgg.badge,
                     style = MaterialTheme.typography.labelLarge,
                     color = Midnight.copy(alpha = 0.78f)
                 )
                 Text(
-                    text = "塗哥生日快樂",
+                    text = easterEgg.title,
                     style = MaterialTheme.typography.headlineMedium,
                     color = Midnight
                 )
                 Text(
-                    text = "今彩539頭獎得主鋒兄",
+                    text = easterEgg.subtitle,
                     style = MaterialTheme.typography.titleMedium,
                     color = Ink
                 )
                 Text(
-                    text = "今天首頁自動開啟生日特效，祝福與好手氣一起加倍。",
+                    text = easterEgg.description,
                     style = MaterialTheme.typography.bodyMedium,
                     color = Midnight.copy(alpha = 0.8f)
                 )
             }
         }
+    }
+}
+
+private data class BirthdayEasterEgg(
+    val badge: String,
+    val title: String,
+    val subtitle: String,
+    val description: String
+)
+
+private fun rememberBirthdayEasterEgg(today: LocalDate): BirthdayEasterEgg? {
+    return when {
+        today.monthValue == 4 && today.dayOfMonth == 3 -> BirthdayEasterEgg(
+            badge = "4/3 限定彩蛋",
+            title = "塗哥生日快樂",
+            subtitle = "今彩539頭獎得主鋒兄",
+            description = "今天首頁自動開啟生日特效，祝福與好手氣一起加倍。"
+        )
+        today.monthValue == 11 && today.dayOfMonth == 27 -> BirthdayEasterEgg(
+            badge = "11/27 限定彩蛋",
+            title = "鋒兄生日快樂",
+            subtitle = "高考三級資訊處理榜首鋒兄",
+            description = "今天首頁自動開啟鋒兄專屬生日特效，祝福榜首鋒芒繼續一路發光。"
+        )
+        else -> null
     }
 }
 

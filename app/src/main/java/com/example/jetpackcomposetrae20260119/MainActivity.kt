@@ -53,8 +53,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -201,6 +203,10 @@ private fun HomeScreen(
 
         Spacer(modifier = Modifier.padding(top = 14.dp))
 
+        FengBroAsciiCard()
+
+        Spacer(modifier = Modifier.padding(top = 14.dp))
+
         if (birthdayEasterEgg != null) {
             BirthdayEasterEggCard(birthdayEasterEgg)
             Spacer(modifier = Modifier.padding(top = 14.dp))
@@ -250,6 +256,47 @@ private fun HomeScreen(
                 2 -> USDebtScreen(usDebtViewModel)
                 else -> LotteryComparisonScreen(lotteryComparisonViewModel)
             }
+        }
+    }
+}
+
+@Composable
+private fun FengBroAsciiCard() {
+    val asciiArt = """
+        ______                         __               
+       / ____/__  ____  ____ _        / /_  _________  
+      / /_  / _ \/ __ \/ __ `/ ______/ __ \/ ___/ __ \ 
+     / __/ /  __/ / / / /_/ / /_____/ /_/ / /  / /_/ /
+    /_/    \___/_/ /_/\__, /       /_.___/_/   \____/ 
+                     /____/                           
+    """.trimIndent()
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(30.dp),
+        color = Midnight
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = "ASCII ART",
+                style = MaterialTheme.typography.labelLarge,
+                color = CopperGlow
+            )
+            Text(
+                text = asciiArt,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 11.sp,
+                lineHeight = 13.sp,
+                color = Fog
+            )
+            Text(
+                text = "feng bro",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color(0xFFFFE08A)
+            )
         }
     }
 }

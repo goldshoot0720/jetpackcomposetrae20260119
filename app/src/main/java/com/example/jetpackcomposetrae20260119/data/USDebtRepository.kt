@@ -125,37 +125,23 @@ class USDebtRepository(context: Context) {
             .replace(Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL), " ")
             .replace(Regex("""\s+"""), " ")
 
-        val baseValue = Regex("""var\s+$elementId\s*=\s*([0-9]+(?:\.[0-9]+)?)\s*;""")
-            .find(normalizedSnippet)
-            ?.groupValues
-            ?.getOrNull(1)
-            ?.toDoubleOrNull()
-            ?: return null
+        val formulaMatch = Regex(
+            pattern = """
+                var\s+$elementId\s*=\s*([0-9]+(?:\.[0-9]+)?)\s*;\s*
+                var\s+([A-Za-z0-9_]+)\s*=\s*([0-9]+(?:\.[0-9]+)?)\s*;\s*
+                var\s+([A-Za-z0-9_]+)\s*=\s*([0-9]+(?:\.[0-9]+)?)\s*;\s*
+                var\s+Class\s*=\s*new\s+Date\(\)\s*;\s*
+                var\s+Method\s*=\s*Class\.getTime\(\)\s*/\s*1000\s*-\s*\4\s*;\s*
+                var\s+Public\s*=\s*$elementId\s*\+\s*Method\s*\*\s*\2
+            """.trimIndent(),
+            options = setOf(RegexOption.IGNORE_CASE, RegexOption.COMMENTS)
+        ).find(normalizedSnippet)
 
-        val rateVariable = Regex("""var\s+Public\s*=\s*$elementId\s*\+\s*Method\s*\*\s*([A-Za-z0-9_]+)""")
-            .find(normalizedSnippet)
-            ?.groupValues
-            ?.getOrNull(1)
+        val baseValue = formulaMatch?.groupValues?.getOrNull(1)?.toDoubleOrNull()
             ?: return null
-
-        val ratePerSecond = Regex("""var\s+$rateVariable\s*=\s*([0-9]+(?:\.[0-9]+)?)""")
-            .find(normalizedSnippet)
-            ?.groupValues
-            ?.getOrNull(1)
-            ?.toDoubleOrNull()
+        val ratePerSecond = formulaMatch.groupValues.getOrNull(3)?.toDoubleOrNull()
             ?: return null
-
-        val anchorVariable = Regex("""var\s+Method\s*=\s*Class\.getTime\(\)\s*/\s*1000\s*-\s*([A-Za-z0-9_]+)""")
-            .find(normalizedSnippet)
-            ?.groupValues
-            ?.getOrNull(1)
-            ?: return null
-
-        val anchorValue = Regex("""var\s+$anchorVariable\s*=\s*([0-9]+(?:\.[0-9]+)?)""")
-            .find(normalizedSnippet)
-            ?.groupValues
-            ?.getOrNull(1)
-            ?.toDoubleOrNull()
+        val anchorValue = formulaMatch.groupValues.getOrNull(5)?.toDoubleOrNull()
             ?: return null
 
         val anchorSeconds = when {

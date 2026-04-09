@@ -23,6 +23,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,6 +38,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
@@ -60,6 +63,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.example.jetpackcomposetrae20260119.ui.BatteryScreen
+import com.example.jetpackcomposetrae20260119.ui.BatteryViewModel
 import com.example.jetpackcomposetrae20260119.ui.LotteryComparisonScreen
 import com.example.jetpackcomposetrae20260119.ui.LotteryComparisonViewModel
 import com.example.jetpackcomposetrae20260119.ui.OilMonitoringScreen
@@ -81,6 +86,7 @@ import com.example.jetpackcomposetrae20260119.worker.WorkerScheduler
 import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
+    private val batteryViewModel: BatteryViewModel by viewModels()
     private val subscriptionViewModel: SubscriptionViewModel by viewModels()
     private val oilPriceViewModel: OilPriceViewModel by viewModels()
     private val usDebtViewModel: USDebtViewModel by viewModels()
@@ -109,6 +115,7 @@ class MainActivity : ComponentActivity() {
                     color = Mist
                 ) {
                     HomeScreen(
+                        batteryViewModel = batteryViewModel,
                         subscriptionViewModel = subscriptionViewModel,
                         oilPriceViewModel = oilPriceViewModel,
                         usDebtViewModel = usDebtViewModel,
@@ -143,7 +150,9 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun HomeScreen(
+    batteryViewModel: BatteryViewModel,
     subscriptionViewModel: SubscriptionViewModel,
     oilPriceViewModel: OilPriceViewModel,
     usDebtViewModel: USDebtViewModel,
@@ -154,6 +163,7 @@ private fun HomeScreen(
     val birthdayEasterEgg = rememberBirthdayEasterEgg(today)
 
     val tabs = listOf(
+        HomeTab("電池選單", "Battery", Icons.Default.DateRange),
         HomeTab("訂閱提醒", "Renewals", Icons.AutoMirrored.Filled.List),
         HomeTab("油價觀測", "Oil", Icons.Default.Refresh),
         HomeTab("美債追蹤", "US Debt", Icons.Default.DateRange),
@@ -217,18 +227,20 @@ private fun HomeScreen(
             color = Fog,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Row(
+            FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(6.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                maxItemsInEachRow = 3
             ) {
                 tabs.forEachIndexed { index, tab ->
                     MenuTab(
                         tab = tab,
                         selected = selectedTab == index,
                         onClick = { selectedTab = index },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.fillMaxWidth(0.31f)
                     )
                 }
             }
@@ -251,9 +263,10 @@ private fun HomeScreen(
             modifier = Modifier.weight(1f)
         ) { tabIndex ->
             when (tabIndex) {
-                0 -> SubscriptionScreen(subscriptionViewModel)
-                1 -> OilMonitoringScreen(oilPriceViewModel)
-                2 -> USDebtScreen(usDebtViewModel)
+                0 -> BatteryScreen(batteryViewModel)
+                1 -> SubscriptionScreen(subscriptionViewModel)
+                2 -> OilMonitoringScreen(oilPriceViewModel)
+                3 -> USDebtScreen(usDebtViewModel)
                 else -> LotteryComparisonScreen(lotteryComparisonViewModel)
             }
         }

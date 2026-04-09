@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
@@ -41,7 +42,10 @@ import com.example.jetpackcomposetrae20260119.ui.theme.Porcelain
 import com.example.jetpackcomposetrae20260119.ui.theme.Slate
 
 @Composable
-fun BatteryScreen(viewModel: BatteryViewModel) {
+fun BatteryScreen(
+    viewModel: BatteryViewModel,
+    headerContent: LazyListScope.() -> Unit = {}
+) {
     val snapshot by viewModel.snapshot.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
@@ -55,16 +59,24 @@ fun BatteryScreen(viewModel: BatteryViewModel) {
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            item {
-                BatteryIntroCard(
-                    isLoading = isLoading,
-                    onRefresh = viewModel::refresh
-                )
-            }
+            headerContent()
 
             snapshot?.let { batterySnapshot ->
                 item {
-                    BatteryInfoCard(snapshot = batterySnapshot)
+                    BatteryInfoCard(
+                        snapshot = batterySnapshot,
+                        isLoading = isLoading,
+                        onRefresh = viewModel::refresh
+                    )
+                }
+            }
+
+            if (snapshot == null && errorMessage == null) {
+                item {
+                    BatteryEmptyCard(
+                        isLoading = isLoading,
+                        onRefresh = viewModel::refresh
+                    )
                 }
             }
 
@@ -101,7 +113,7 @@ fun BatteryScreen(viewModel: BatteryViewModel) {
 }
 
 @Composable
-private fun BatteryIntroCard(
+private fun BatteryEmptyCard(
     isLoading: Boolean,
     onRefresh: () -> Unit
 ) {
@@ -149,7 +161,11 @@ private fun BatteryIntroCard(
 }
 
 @Composable
-private fun BatteryInfoCard(snapshot: BatterySnapshot) {
+private fun BatteryInfoCard(
+    snapshot: BatterySnapshot,
+    isLoading: Boolean,
+    onRefresh: () -> Unit
+) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -159,9 +175,21 @@ private fun BatteryInfoCard(snapshot: BatterySnapshot) {
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
+                text = "Battery Status",
+                style = MaterialTheme.typography.labelMedium,
+                color = Copper
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
                 text = "\u96fb\u6c60\u8cc7\u8a0a",
                 style = MaterialTheme.typography.titleLarge,
                 color = Color.White
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "\u8cc7\u6599\u6703\u96a8\u8457\u91cd\u65b0\u8b80\u53d6\u66f4\u65b0\uff0c\u4e0a\u6b21\u5145\u6eff\u96fb\u6642\u9593\u6703\u5728\u88dd\u7f6e\u5168\u6eff\u6642\u8a18\u9304\u3002",
+                style = MaterialTheme.typography.bodySmall,
+                color = Fog.copy(alpha = 0.68f)
             )
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -193,6 +221,21 @@ private fun BatteryInfoCard(snapshot: BatterySnapshot) {
                     "\u672a\u5145\u96fb\uff0c\u7121\u6cd5\u4f30\u7b97"
                 }
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            FilledTonalButton(
+                onClick = onRefresh,
+                enabled = !isLoading,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(text = if (isLoading) "\u91cd\u65b0\u6574\u7406\u4e2d..." else "\u91cd\u65b0\u8b80\u53d6\u96fb\u6c60\u8cc7\u8a0a")
+            }
         }
     }
 }

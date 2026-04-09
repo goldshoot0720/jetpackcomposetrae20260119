@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -45,7 +46,10 @@ import com.example.jetpackcomposetrae20260119.ui.theme.Porcelain
 import com.example.jetpackcomposetrae20260119.ui.theme.Slate
 
 @Composable
-fun LotteryComparisonScreen(viewModel: LotteryComparisonViewModel) {
+fun LotteryComparisonScreen(
+    viewModel: LotteryComparisonViewModel,
+    headerContent: LazyListScope.() -> Unit = {}
+) {
     val sections by viewModel.sections.collectAsState()
     val rangeLabel by viewModel.rangeLabel.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -60,6 +64,8 @@ fun LotteryComparisonScreen(viewModel: LotteryComparisonViewModel) {
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            headerContent()
+
             item {
                 LotterySourceCard(
                     rangeLabel = rangeLabel,

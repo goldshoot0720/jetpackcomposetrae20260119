@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -57,7 +58,8 @@ import java.util.Locale
 
 @Composable
 fun OilMonitoringScreen(
-    viewModel: OilPriceViewModel
+    viewModel: OilPriceViewModel,
+    headerContent: LazyListScope.() -> Unit = {}
 ) {
     val latest by viewModel.latest.collectAsState()
     val history by viewModel.history.collectAsState()
@@ -73,6 +75,8 @@ fun OilMonitoringScreen(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            headerContent()
+
             item {
                 Surface(
                     modifier = Modifier

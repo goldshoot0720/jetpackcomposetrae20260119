@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -178,6 +179,55 @@ private fun HomeScreen(
             .navigationBarsPadding()
             .padding(horizontal = 18.dp, vertical = 14.dp)
     ) {
+        AnimatedContent(
+            targetState = selectedTab,
+            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            label = "home_content",
+            modifier = Modifier.fillMaxSize()
+        ) { tabIndex ->
+            val headerContent: LazyListScope.() -> Unit = {
+                homeHeaderSection(
+                    tabs = tabs,
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it },
+                    birthdayEasterEgg = birthdayEasterEgg
+                )
+            }
+
+            when (tabIndex) {
+                0 -> BatteryScreen(
+                    viewModel = batteryViewModel,
+                    headerContent = headerContent
+                )
+                1 -> SubscriptionScreen(
+                    viewModel = subscriptionViewModel,
+                    headerContent = headerContent
+                )
+                2 -> OilMonitoringScreen(
+                    viewModel = oilPriceViewModel,
+                    headerContent = headerContent
+                )
+                3 -> USDebtScreen(
+                    viewModel = usDebtViewModel,
+                    headerContent = headerContent
+                )
+                else -> LotteryComparisonScreen(
+                    viewModel = lotteryComparisonViewModel,
+                    headerContent = headerContent
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+private fun LazyListScope.homeHeaderSection(
+    tabs: List<HomeTab>,
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    birthdayEasterEgg: BirthdayEasterEgg?
+) {
+    item {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -210,18 +260,30 @@ private fun HomeScreen(
                 }
             }
         }
+    }
 
+    item {
         Spacer(modifier = Modifier.padding(top = 14.dp))
+    }
 
+    item {
         FengBroAsciiCard()
+    }
 
-        Spacer(modifier = Modifier.padding(top = 14.dp))
-
-        if (birthdayEasterEgg != null) {
-            BirthdayEasterEggCard(birthdayEasterEgg)
+    if (birthdayEasterEgg != null) {
+        item {
             Spacer(modifier = Modifier.padding(top = 14.dp))
         }
+        item {
+            BirthdayEasterEggCard(birthdayEasterEgg)
+        }
+    }
 
+    item {
+        Spacer(modifier = Modifier.padding(top = 14.dp))
+    }
+
+    item {
         Surface(
             shape = RoundedCornerShape(24.dp),
             color = Fog,
@@ -239,37 +301,28 @@ private fun HomeScreen(
                     MenuTab(
                         tab = tab,
                         selected = selectedTab == index,
-                        onClick = { selectedTab = index },
+                        onClick = { onTabSelected(index) },
                         modifier = Modifier.fillMaxWidth(0.31f)
                     )
                 }
             }
         }
+    }
 
+    item {
         Spacer(modifier = Modifier.padding(top = 14.dp))
+    }
 
+    item {
         Text(
             text = "選擇想查看的資料卡",
             style = MaterialTheme.typography.labelLarge,
             color = Midnight.copy(alpha = 0.62f)
         )
+    }
 
+    item {
         Spacer(modifier = Modifier.padding(top = 10.dp))
-
-        AnimatedContent(
-            targetState = selectedTab,
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
-            label = "home_content",
-            modifier = Modifier.weight(1f)
-        ) { tabIndex ->
-            when (tabIndex) {
-                0 -> BatteryScreen(batteryViewModel)
-                1 -> SubscriptionScreen(subscriptionViewModel)
-                2 -> OilMonitoringScreen(oilPriceViewModel)
-                3 -> USDebtScreen(usDebtViewModel)
-                else -> LotteryComparisonScreen(lotteryComparisonViewModel)
-            }
-        }
     }
 }
 

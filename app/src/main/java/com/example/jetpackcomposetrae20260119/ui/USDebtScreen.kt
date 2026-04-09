@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -60,7 +61,10 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
-fun USDebtScreen(viewModel: USDebtViewModel) {
+fun USDebtScreen(
+    viewModel: USDebtViewModel,
+    headerContent: LazyListScope.() -> Unit = {}
+) {
     val latest by viewModel.latest.collectAsState()
     val history by viewModel.history.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -75,6 +79,8 @@ fun USDebtScreen(viewModel: USDebtViewModel) {
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            headerContent()
+
             item {
                 SourceCard(
                     isLoading = isLoading,

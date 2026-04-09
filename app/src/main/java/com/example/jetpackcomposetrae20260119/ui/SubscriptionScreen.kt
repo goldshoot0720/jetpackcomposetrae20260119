@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -52,7 +53,8 @@ import java.time.temporal.ChronoUnit
 
 @Composable
 fun SubscriptionScreen(
-    viewModel: SubscriptionViewModel
+    viewModel: SubscriptionViewModel,
+    headerContent: LazyListScope.() -> Unit = {}
 ) {
     val subscriptions by viewModel.subscriptions.collectAsState()
     val upcomingSubscriptions by viewModel.upcomingSubscriptions.collectAsState()
@@ -68,6 +70,8 @@ fun SubscriptionScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
             modifier = Modifier.fillMaxSize()
         ) {
+            headerContent()
+
             item {
                 SubscriptionOverview(
                     totalCount = subscriptions.size,

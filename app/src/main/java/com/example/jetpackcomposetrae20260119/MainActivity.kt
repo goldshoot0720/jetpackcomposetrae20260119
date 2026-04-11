@@ -71,6 +71,7 @@ import com.example.jetpackcomposetrae20260119.ui.LotteryComparisonScreen
 import com.example.jetpackcomposetrae20260119.ui.LotteryComparisonViewModel
 import com.example.jetpackcomposetrae20260119.ui.OilMonitoringScreen
 import com.example.jetpackcomposetrae20260119.ui.OilPriceViewModel
+import com.example.jetpackcomposetrae20260119.ui.PriceComparisonScreen
 import com.example.jetpackcomposetrae20260119.ui.SubscriptionScreen
 import com.example.jetpackcomposetrae20260119.ui.SubscriptionViewModel
 import com.example.jetpackcomposetrae20260119.ui.USDebtScreen
@@ -179,7 +180,8 @@ private fun HomeScreen(
         HomeTab("訂閱提醒", "Renewals", Icons.AutoMirrored.Filled.List),
         HomeTab("油價觀測", "Oil", Icons.Default.Refresh),
         HomeTab("美債追蹤", "US Debt", Icons.Default.DateRange),
-        HomeTab("最瞎結婚理由", "Lottery", Icons.Default.Info)
+        HomeTab("醉蝦結婚理由", "Marriage", Icons.Default.Info),
+        HomeTab("鋒兄比價", "Price", Icons.Default.Refresh)
     )
 
     Column(
@@ -223,8 +225,11 @@ private fun HomeScreen(
                     viewModel = usDebtViewModel,
                     headerContent = headerContent
                 )
-                else -> LotteryComparisonScreen(
+                4 -> LotteryComparisonScreen(
                     viewModel = lotteryComparisonViewModel,
+                    headerContent = headerContent
+                )
+                else -> PriceComparisonScreen(
                     headerContent = headerContent
                 )
             }

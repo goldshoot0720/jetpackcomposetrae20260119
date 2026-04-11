@@ -165,6 +165,43 @@ fun LotteryComparisonScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 4.dp),
                     shape = RoundedCornerShape(30.dp),
+                    color = Midnight
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            text = "本日醉蝦語錄",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Copper
+                        )
+                        Text(
+                            text = selected?.punchline
+                                ?: "先選一條理由，看看一句話怎麼把中獎畫面硬講成婚姻證據。",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = if (selected != null) {
+                                "這段最適合拿去婚宴敬酒時突然朗讀。"
+                            } else {
+                                "選單裡每一條都走同一路線：越離譜，越像真的有人講過。"
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.72f)
+                        )
+                    }
+                }
+            }
+
+            item {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
+                    shape = RoundedCornerShape(30.dp),
                     color = Porcelain
                 ) {
                     Column(

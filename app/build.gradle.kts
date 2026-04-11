@@ -1,4 +1,4 @@
-﻿plugins {
+plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
@@ -14,8 +14,8 @@ android {
         applicationId = "com.example.jetpackcomposetrae20260119"
         minSdk = 24
         targetSdk = 36
-        versionCode = 21
-        versionName = "1.2.18"
+        versionCode = 22
+        versionName = "1.2.19"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

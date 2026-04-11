@@ -24,8 +24,6 @@ class AppwriteRepository(context: Context) {
         .setSelfSigned(true)
 
     private val databases = Databases(client)
-    private val resolvedTableIds = mutableMapOf<String, String>()
-
     suspend fun getSubscriptions(): List<Subscription> = withContext(Dispatchers.IO) {
         getSubscriptionsFromDynamicTable().ifEmpty {
             getSubscriptionsFromLegacyCollection()
@@ -62,17 +60,7 @@ class AppwriteRepository(context: Context) {
     }
 
     suspend fun resolveFoodTableId(): String? = withContext(Dispatchers.IO) {
-        resolveAccessibleTableId(
-            cacheKey = FOOD_TABLE_CACHE_KEY,
-            tableNames = listOf(
-                Constants.FOOD_COLLECTION_NAME,
-                "foods"
-            ),
-            fallbackIds = listOf(
-                Constants.FOOD_COLLECTION_NAME,
-                "foods_table"
-            )
-        )
+        FIXED_FOOD_TABLE_IDS.firstOrNull()
     }
 
     suspend fun ping() = withContext(Dispatchers.IO) {
@@ -116,6 +104,9 @@ class AppwriteRepository(context: Context) {
             Log.d(TAG, "Fetched ${allSubscriptions.size} subscriptions from table $tableId")
             allSubscriptions
         } catch (error: Exception) {
+            if (error.isUnauthorized()) {
+                Log.w(TAG, "Subscription table rows are unauthorized, falling back to legacy collection")
+            }
             Log.e(TAG, "Dynamic subscription table lookup failed", error)
             emptyList()
         }
@@ -131,6 +122,9 @@ class AppwriteRepository(context: Context) {
             Log.d(TAG, "Subscription added through dynamic table $tableId")
             true
         } catch (error: Exception) {
+            if (error.isUnauthorized()) {
+                Log.w(TAG, "Subscription table insert is unauthorized, falling back to legacy collection")
+            }
             Log.e(TAG, "Dynamic subscription table insert failed", error)
             false
         }
@@ -183,73 +177,23 @@ class AppwriteRepository(context: Context) {
     }
 
     private fun resolveSubscriptionTableId(): String? {
-        return resolveAccessibleTableId(
-            cacheKey = SUBSCRIPTION_TABLE_CACHE_KEY,
-            tableNames = listOf(
-                Constants.SUBSCRIPTION_COLLECTION_NAME,
-                "subscriptions"
-            ),
-            fallbackIds = listOf(
-                Constants.SUBSCRIPTION_COLLECTION_ID
-            )
-        )
-    }
-
-    private fun resolveAccessibleTableId(
-        cacheKey: String,
-        tableNames: List<String>,
-        fallbackIds: List<String>
-    ): String? {
-        resolvedTableIds[cacheKey]?.let { return it }
-
-        val dynamicCandidates = findDynamicTableIds(tableNames)
-        val orderedCandidates = (dynamicCandidates + fallbackIds).distinct()
-
-        orderedCandidates.forEach { candidate ->
+        FIXED_SUBSCRIPTION_TABLE_IDS.forEach { candidate ->
             try {
                 listRowsFromTable(
                     tableId = candidate,
                     queries = listOf(Query.limit(1))
                 )
-                resolvedTableIds[cacheKey] = candidate
-                Log.d(TAG, "Resolved table $cacheKey -> $candidate")
+                Log.d(TAG, "Resolved fixed subscription table id -> $candidate")
                 return candidate
             } catch (error: Exception) {
+                if (error.isUnauthorized()) {
+                    Log.w(TAG, "Fixed table candidate $candidate returned 401, trying next fallback")
+                }
                 Log.d(TAG, "Table candidate $candidate is not available yet", error)
             }
         }
 
         return null
-    }
-
-    private fun findDynamicTableIds(tableNames: List<String>): List<String> {
-        return try {
-            val response = executeJsonRequest(
-                url = "${Constants.ENDPOINT}/tablesdb/${Constants.DATABASE_ID}/tables",
-                method = "GET"
-            )
-            val tables = response.optJSONArray("tables") ?: JSONArray()
-            buildList {
-                for (index in 0 until tables.length()) {
-                    val table = tables.optJSONObject(index) ?: continue
-                    val name = table.optString("name")
-                    if (tableNames.none { it.equals(name, ignoreCase = true) }) {
-                        continue
-                    }
-
-                    val tableId = table.optString("\$id")
-                        .ifBlank { table.optString("tableId") }
-                        .ifBlank { table.optString("id") }
-
-                    if (tableId.isNotBlank()) {
-                        add(tableId)
-                    }
-                }
-            }
-        } catch (error: Exception) {
-            Log.d(TAG, "Dynamic table listing unavailable, will fall back to fixed ids", error)
-            emptyList()
-        }
     }
 
     private fun listRowsFromTable(
@@ -340,7 +284,10 @@ class AppwriteRepository(context: Context) {
             }
 
             if (responseCode !in 200..299) {
-                throw IllegalStateException("Appwrite request failed ($responseCode): $responseText")
+                throw AppwriteHttpException(
+                    statusCode = responseCode,
+                    message = "Appwrite request failed ($responseCode): $responseText"
+                )
             }
 
             JSONObject(responseText)
@@ -375,9 +322,25 @@ class AppwriteRepository(context: Context) {
         return URLEncoder.encode(value, Charsets.UTF_8.name())
     }
 
+    private fun Throwable.isUnauthorized(): Boolean {
+        return (this as? AppwriteHttpException)?.statusCode == HttpURLConnection.HTTP_UNAUTHORIZED
+    }
+
     companion object {
         private const val TAG = "AppwriteRepository"
-        private const val SUBSCRIPTION_TABLE_CACHE_KEY = "subscription_table"
-        private const val FOOD_TABLE_CACHE_KEY = "food_table"
+        private val FIXED_SUBSCRIPTION_TABLE_IDS = listOf(
+            Constants.SUBSCRIPTION_COLLECTION_ID,
+            Constants.SUBSCRIPTION_COLLECTION_NAME,
+            "subscriptions"
+        )
+        private val FIXED_FOOD_TABLE_IDS = listOf(
+            Constants.FOOD_COLLECTION_NAME,
+            "foods_table"
+        )
     }
 }
+
+private class AppwriteHttpException(
+    val statusCode: Int,
+    message: String
+) : IllegalStateException(message)

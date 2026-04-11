@@ -1,4 +1,4 @@
-﻿package com.example.jetpackcomposetrae20260119.ui
+package com.example.jetpackcomposetrae20260119.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -6,54 +6,117 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.jetpackcomposetrae20260119.data.LotteryDraw
-import com.example.jetpackcomposetrae20260119.data.LotterySection
-import com.example.jetpackcomposetrae20260119.data.LotteryTicket
 import com.example.jetpackcomposetrae20260119.ui.theme.Copper
-import com.example.jetpackcomposetrae20260119.ui.theme.Fog
-import com.example.jetpackcomposetrae20260119.ui.theme.Garnet
 import com.example.jetpackcomposetrae20260119.ui.theme.Ink
 import com.example.jetpackcomposetrae20260119.ui.theme.Midnight
 import com.example.jetpackcomposetrae20260119.ui.theme.Porcelain
+import com.example.jetpackcomposetrae20260119.ui.theme.Sand
 import com.example.jetpackcomposetrae20260119.ui.theme.Slate
 
+private data class MarriageReasonOption(
+    val id: String,
+    val title: String,
+    val summary: String,
+    val punchline: String,
+    val tags: List<String>
+)
+
+private val marriageReasonOptions = listOf(
+    MarriageReasonOption(
+        id = "moon-elder-539",
+        title = "今彩 539 根本是月老代班系統",
+        summary = "鋒兄跟塗哥都把開獎畫面講得像感情認證流程，只要號碼一中，整段戀愛史就被包裝成天意安排。",
+        punchline = "不是先交往再結婚，是先中獎再補上命運說明書。",
+        tags = listOf("鋒兄", "塗哥", "月老代班")
+    ),
+    MarriageReasonOption(
+        id = "feng-contract",
+        title = "鋒兄說這其實是中獎合約書",
+        summary = "思敏那期號碼一開出來，鋒兄立刻認定這不是普通運氣，而是一份宇宙已經蓋章的關係契約。",
+        punchline = "不結婚就像拒簽頭獎文件，聽起來荒謬，但他講得超有自信。",
+        tags = listOf("思敏", "宇宙契約", "超展開")
+    ),
+    MarriageReasonOption(
+        id = "tu-called",
+        title = "塗哥認定財神直接幫他點名",
+        summary = "惠璇隨手挑的號碼進了中獎圈後，塗哥瞬間把這件事理解成財神與月老共同連線，公開宣布未來走向。",
+        punchline = "如果天都幫你點名了，剩下的只是去婚宴現場報到。",
+        tags = listOf("惠璇", "財神來電", "公開宣布")
+    ),
+    MarriageReasonOption(
+        id = "double-jackpot",
+        title = "兩對情侶共用同一套荒唐中獎理論",
+        summary = "鋒兄配思敏、塗哥配惠璇，最後都把彩券畫面說成婚姻證據，整桌朋友嘴上吐槽，心裡卻越聽越完整。",
+        punchline = "理論越扯，敬酒時越有人想聽第二次。",
+        tags = listOf("雙線敘事", "婚宴傳說", "朋友全買單")
+    ),
+    MarriageReasonOption(
+        id = "love-math",
+        title = "戀愛不是玄學，是大聲講出來的數學",
+        summary = "原本只是一次普通下注，結果一中就被講成感情公式成立，連旁邊沒下注的人都被迫一起驗算。",
+        punchline = "他們叫它浪漫，旁觀者只覺得這是高強度心證推導。",
+        tags = listOf("戀愛數學", "強行證明", "高強度")
+    ),
+    MarriageReasonOption(
+        id = "lottery-vows",
+        title = "背期號比背結婚誓詞還熟",
+        summary = "鋒兄能把那期號碼倒背如流，每次講到關鍵轉折都像在重播人生最重要的告白畫面。",
+        punchline = "誓詞可以改稿，頭獎期號卻被他直接刻進人生設定。",
+        tags = listOf("人生明牌", "期號誓詞", "記憶點")
+    ),
+    MarriageReasonOption(
+        id = "banquet-joke",
+        title = "最離譜的理由反而變成婚宴主題",
+        summary = "原本只是朋友間的笑話，最後卻演變成每桌都在重複的祝酒詞，越講越像這段婚姻真的有官方見證。",
+        punchline = "最瞎的理由，偏偏成了整場最有品牌感的一句話。",
+        tags = listOf("婚宴", "祝酒詞", "最瞎但最紅")
+    ),
+    MarriageReasonOption(
+        id = "tomorrow-ticket",
+        title = "聽完整段故事的人都想順手買一張",
+        summary = "大家嘴上說這套理由太扯，實際上回家前都默默確認了明天的開獎時間，怕命運真的只差一張彩券。",
+        punchline = "荒謬是真的荒謬，但誘惑也是真的很完整。",
+        tags = listOf("旁觀者效應", "明天就買", "甜蜜混亂")
+    )
+)
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun LotteryComparisonScreen(
     viewModel: LotteryComparisonViewModel,
     headerContent: LazyListScope.() -> Unit = {}
 ) {
-    val sections by viewModel.sections.collectAsState()
-    val rangeLabel by viewModel.rangeLabel.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
+    var expanded by remember { mutableStateOf(false) }
+    var selectedId by remember { mutableStateOf("") }
+    val selected = marriageReasonOptions.firstOrNull { it.id == selectedId }
+    val tags = selected?.tags ?: listOf("今彩 539", "朋友亂講", "甜得很認真")
 
     Box(
         modifier = Modifier
@@ -67,32 +130,173 @@ fun LotteryComparisonScreen(
             headerContent()
 
             item {
-                LotterySourceCard(
-                    rangeLabel = rangeLabel,
-                    isLoading = isLoading,
-                    onRefresh = viewModel::refresh
-                )
-            }
-
-            sections.forEach { section ->
-                item(section.id) {
-                    LotterySectionCard(section = section)
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
+                    shape = RoundedCornerShape(30.dp),
+                    color = Porcelain
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)) {
+                        Text(
+                            text = "醉蝦結婚理由",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Copper
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "挑一條最離譜的理由，看今彩 539 怎麼被講成婚姻證物",
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = Ink
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "內容參考 mydailycash 的婚宴笑話支線，保留那種一本正經胡說八道的語氣，整理成手機版故事卡。",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Slate
+                        )
+                    }
                 }
             }
 
-            if (errorMessage != null) {
-                item {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 4.dp),
-                        shape = RoundedCornerShape(22.dp),
-                        color = Color(0xFFF6E5E1)
+            item {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
+                    shape = RoundedCornerShape(30.dp),
+                    color = Porcelain
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
-                            text = errorMessage.orEmpty(),
-                            modifier = Modifier.padding(16.dp),
-                            color = Garnet
+                            text = "理由選單",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = Midnight
+                        )
+                        Text(
+                            text = "鋒兄、塗哥都把今彩 539 講成月老分部。選一條最瞎的理由，看看中獎、命運和婚禮怎麼被硬湊成同一套宇宙觀。",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Slate
+                        )
+
+                        ExposedDropdownMenuBox(
+                            expanded = expanded,
+                            onExpandedChange = { expanded = !expanded }
+                        ) {
+                            OutlinedTextField(
+                                value = selected?.title ?: "請選一條醉蝦結婚理由",
+                                onValueChange = {},
+                                modifier = Modifier
+                                    .menuAnchor()
+                                    .fillMaxWidth(),
+                                readOnly = true,
+                                label = { Text("理由選單") },
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                                }
+                            )
+
+                            DropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                marriageReasonOptions.forEach { option ->
+                                    DropdownMenuItem(
+                                        text = { Text(option.title) },
+                                        onClick = {
+                                            selectedId = option.id
+                                            expanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
+                    shape = RoundedCornerShape(30.dp),
+                    color = Color(0xFFFFFCF4)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Text(
+                            text = selected?.title ?: "還沒選理由",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = Ink,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        Text(
+                            text = selected?.summary
+                                ?: "先從選單挑一條，看鋒兄和塗哥怎麼把開獎畫面講成結婚保證書。",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Midnight
+                        )
+                        Text(
+                            text = selected?.punchline
+                                ?: "中獎可以靠運氣，結婚理由靠的是一種不肯輸的想像力。",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Copper,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            tags.forEach { tag ->
+                                Text(
+                                    text = tag,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(999.dp))
+                                        .background(Sand)
+                                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Midnight,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
+                    shape = RoundedCornerShape(30.dp),
+                    color = Porcelain
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            text = "內容來源",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Ink
+                        )
+                        Text(
+                            text = "參考專案：goldshoot0720 / mydailycash",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Midnight
+                        )
+                        Text(
+                            text = "本頁改寫自該專案的婚宴理由選單與故事卡內容，重新整理成 Atlas Monitor 的分頁閱讀形式。",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Slate
                         )
                     }
                 }
@@ -102,252 +306,5 @@ fun LotteryComparisonScreen(
                 Spacer(modifier = Modifier.height(12.dp))
             }
         }
-
-        if (isLoading && sections.isEmpty()) {
-            CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center),
-                color = Copper
-            )
-        }
     }
 }
-
-@Composable
-private fun LotterySourceCard(
-    rangeLabel: String,
-    isLoading: Boolean,
-    onRefresh: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 4.dp),
-        shape = RoundedCornerShape(30.dp),
-        color = Porcelain
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)) {
-            Text(
-                text = "\u6700\u778e\u7d50\u5a5a\u7406\u7531",
-                style = MaterialTheme.typography.labelMedium,
-                color = Copper
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "\u53f0\u5f69\u5404\u671f\u865f\u78bc\u8207\u81ea\u8a02\u7d44\u5408\u6bd4\u5c0d",
-                style = MaterialTheme.typography.headlineLarge,
-                color = Ink
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = "\u8cc7\u6599\u4f86\u6e90\u4f9d\u7167\u53f0\u7063\u5f69\u5238\u5b98\u65b9\u7d50\u679c\u9801\uff0c\u6574\u7406\u5a01\u529b\u5f69\u3001\u5927\u6a02\u900f\u3001\u4eca\u5f69539\u8fd1\u4e09\u500b\u6708\u5404\u671f\u865f\u78bc\uff0c\u4e26\u9010\u671f\u6bd4\u5c0d\u6307\u5b9a\u7d44\u5408\u3002",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Slate
-            )
-            if (rangeLabel.isNotBlank()) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = rangeLabel,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Midnight.copy(alpha = 0.68f)
-                )
-            }
-            Spacer(modifier = Modifier.height(18.dp))
-
-            FilledTonalButton(
-                onClick = onRefresh,
-                enabled = !isLoading,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = null
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(text = if (isLoading) "\u66f4\u65b0\u4e2d..." else "\u91cd\u65b0\u6293\u53d6\u5b98\u65b9\u8cc7\u6599")
-            }
-        }
-    }
-}
-
-@Composable
-private fun LotterySectionCard(section: LotterySection) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 4.dp),
-        shape = RoundedCornerShape(30.dp),
-        color = Porcelain
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(
-                text = section.title,
-                style = MaterialTheme.typography.titleLarge,
-                color = Ink
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "\u4f86\u6e90\uff1a${section.sourceUrl}",
-                style = MaterialTheme.typography.bodySmall,
-                color = Slate
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "\u5171 ${section.draws.size} \u671f",
-                style = MaterialTheme.typography.labelLarge,
-                color = Midnight.copy(alpha = 0.68f)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            section.draws.forEachIndexed { index, draw ->
-                DrawCard(draw = draw, tickets = section.tickets)
-                if (index != section.draws.lastIndex) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalLayoutApi::class)
-private fun DrawCard(
-    draw: LotteryDraw,
-    tickets: List<LotteryTicket>
-) {
-    Surface(
-        shape = RoundedCornerShape(24.dp),
-        color = Fog
-    ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Text(
-                text = "\u7b2c ${draw.period} \u671f",
-                style = MaterialTheme.typography.titleMedium,
-                color = Ink
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = draw.lotteryDate,
-                style = MaterialTheme.typography.bodySmall,
-                color = Slate
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                draw.numbers.forEach { number ->
-                    NumberBall(number = number, emphasized = false)
-                }
-                draw.specialNumber?.let { special ->
-                    NumberBall(number = special, emphasized = true)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-            HorizontalDivider(color = Color(0xFFE4DDD1))
-            Spacer(modifier = Modifier.height(14.dp))
-
-            tickets.forEachIndexed { index, ticket ->
-                TicketComparisonRow(
-                    ticket = ticket,
-                    draw = draw
-                )
-                if (index != tickets.lastIndex) {
-                    Spacer(modifier = Modifier.height(10.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun TicketComparisonRow(
-    ticket: LotteryTicket,
-    draw: LotteryDraw
-) {
-    val matchedNumbers = ticket.numbers.intersect(draw.numbers.toSet()).sorted()
-    val specialMatched = ticket.specialNumber != null && draw.specialNumber == ticket.specialNumber
-    val exactMatch = matchedNumbers.size == ticket.numbers.size &&
-        (ticket.specialNumber == null || specialMatched)
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "${ticket.label}\uff1a${ticket.numbers.joinToString(" ") { it.toTwoDigits() }}" +
-                    if (ticket.specialNumber != null) " \u7279\u5225\u865f ${ticket.specialNumber.toTwoDigits()}" else "",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Ink
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = buildComparisonText(
-                    matchedNumbers = matchedNumbers,
-                    specialMatched = specialMatched,
-                    hasSpecial = ticket.specialNumber != null
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = Slate
-            )
-        }
-
-        Surface(
-            shape = RoundedCornerShape(999.dp),
-            color = if (exactMatch) Copper else Color(0xFFE9E2D5)
-        ) {
-            Text(
-                text = if (exactMatch) "\u5b8c\u5168\u547d\u4e2d" else "\u5c0d\u4e2d ${matchedNumbers.size}" +
-                    if (ticket.specialNumber != null && specialMatched) "+1" else "",
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                style = MaterialTheme.typography.labelLarge,
-                color = if (exactMatch) Color.White else Midnight,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-private fun buildComparisonText(
-    matchedNumbers: List<Int>,
-    specialMatched: Boolean,
-    hasSpecial: Boolean
-): String {
-    val matchedText = if (matchedNumbers.isEmpty()) {
-        "\u4e3b\u865f\u672a\u5c0d\u4e2d"
-    } else {
-        "\u4e3b\u865f\u5c0d\u4e2d ${matchedNumbers.joinToString(" ") { it.toTwoDigits() }}"
-    }
-
-    return if (hasSpecial) {
-        "$matchedText\uff1b\u7279\u5225\u865f${if (specialMatched) "\u6709\u5c0d\u4e2d" else "\u672a\u5c0d\u4e2d"}"
-    } else {
-        matchedText
-    }
-}
-
-@Composable
-private fun NumberBall(
-    number: Int,
-    emphasized: Boolean
-) {
-    Surface(
-        shape = CircleShape,
-        color = if (emphasized) Copper else Midnight,
-        modifier = Modifier.size(38.dp)
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = number.toTwoDigits(),
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.White,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-private fun Int.toTwoDigits(): String = toString().padStart(2, '0')

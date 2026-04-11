@@ -49,6 +49,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -85,6 +86,9 @@ import com.example.jetpackcomposetrae20260119.ui.theme.Mist
 import com.example.jetpackcomposetrae20260119.worker.NotificationWorker
 import com.example.jetpackcomposetrae20260119.worker.WorkerScheduler
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     private val batteryViewModel: BatteryViewModel by viewModels()
@@ -160,8 +164,15 @@ private fun HomeScreen(
     lotteryComparisonViewModel: LotteryComparisonViewModel
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
-    val today = LocalDate.now()
+    val now by produceState(initialValue = LocalDateTime.now()) {
+        while (true) {
+            value = LocalDateTime.now()
+            delay(60_000)
+        }
+    }
+    val today = now.toLocalDate()
     val birthdayEasterEgg = rememberBirthdayEasterEgg(today)
+    val sleepReminder = calculateSleepReminder(now)
 
     val tabs = listOf(
         HomeTab("電池選單", "Battery", Icons.Default.DateRange),
@@ -190,7 +201,8 @@ private fun HomeScreen(
                     tabs = tabs,
                     selectedTab = selectedTab,
                     onTabSelected = { selectedTab = it },
-                    birthdayEasterEgg = birthdayEasterEgg
+                    birthdayEasterEgg = birthdayEasterEgg,
+                    sleepReminder = sleepReminder
                 )
             }
 
@@ -225,7 +237,8 @@ private fun LazyListScope.homeHeaderSection(
     tabs: List<HomeTab>,
     selectedTab: Int,
     onTabSelected: (Int) -> Unit,
-    birthdayEasterEgg: BirthdayEasterEgg?
+    birthdayEasterEgg: BirthdayEasterEgg?,
+    sleepReminder: SleepReminder?
 ) {
     item {
         Row(
@@ -276,6 +289,15 @@ private fun LazyListScope.homeHeaderSection(
         }
         item {
             BirthdayEasterEggCard(birthdayEasterEgg)
+        }
+    }
+
+    if (sleepReminder != null) {
+        item {
+            Spacer(modifier = Modifier.padding(top = 14.dp))
+        }
+        item {
+            SleepReminderCard(sleepReminder)
         }
     }
 
@@ -463,6 +485,13 @@ private data class BirthdayEasterEgg(
     val description: String
 )
 
+private data class SleepReminder(
+    val currentDateLabel: String,
+    val currentTimeLabel: String,
+    val reminderCount: Int,
+    val guidance: String
+)
+
 private fun rememberBirthdayEasterEgg(today: LocalDate): BirthdayEasterEgg? {
     return when {
         today.monthValue == 4 && today.dayOfMonth == 3 -> BirthdayEasterEgg(
@@ -479,6 +508,95 @@ private fun rememberBirthdayEasterEgg(today: LocalDate): BirthdayEasterEgg? {
         )
         else -> null
     }
+}
+
+@Composable
+private fun SleepReminderCard(reminder: SleepReminder) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(30.dp),
+        color = Color.Transparent
+    ) {
+        Box(
+            modifier = Modifier
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Midnight,
+                            Color(0xFF243248),
+                            Color(0xFF506A84)
+                        ),
+                        start = Offset.Zero,
+                        end = Offset(900f, 320f)
+                    ),
+                    shape = RoundedCornerShape(30.dp)
+                )
+                .padding(horizontal = 20.dp, vertical = 18.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "睡眠提示",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color(0xFFFFD27A)
+                )
+                Text(
+                    text = "該準備睡覺了",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Fog
+                )
+                Text(
+                    text = reminder.guidance,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Fog.copy(alpha = 0.78f)
+                )
+                Spacer(modifier = Modifier.padding(top = 4.dp))
+                Text(
+                    text = "今天日期 ${reminder.currentDateLabel}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                Text(
+                    text = "現在時刻 ${reminder.currentTimeLabel}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                Text(
+                    text = "提示次數 第 ${reminder.reminderCount} 次",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color(0xFFFFE08A)
+                )
+            }
+        }
+    }
+}
+
+private fun calculateSleepReminder(now: LocalDateTime): SleepReminder? {
+    val hour = now.hour
+    val minute = now.minute
+    val totalMinutes = hour * 60 + minute
+    if (totalMinutes < 0 || totalMinutes > 240) {
+        return null
+    }
+
+    val reminderCount = when {
+        totalMinutes < 120 -> (totalMinutes / 30) + 1
+        totalMinutes < 240 -> 5 + ((totalMinutes - 120) / 15)
+        else -> 13
+    }
+
+    val guidance = when {
+        totalMinutes == 0 -> "0 點第一次提示，今天先早點休息。"
+        totalMinutes < 120 -> "0 點到 2 點每 30 分鐘提醒一次，現在已經有點晚了。"
+        totalMinutes < 240 -> "2 點到 4 點每 15 分鐘提醒一次，真的該去睡了。"
+        else -> "4 點最後一次提示，現在該立刻收工休息。"
+    }
+
+    return SleepReminder(
+        currentDateLabel = now.format(DateTimeFormatter.ofPattern("yyyy/MM/dd")),
+        currentTimeLabel = now.format(DateTimeFormatter.ofPattern("HH:mm")),
+        reminderCount = reminderCount,
+        guidance = guidance
+    )
 }
 
 private data class HomeTab(

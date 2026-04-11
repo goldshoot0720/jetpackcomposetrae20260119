@@ -1,8 +1,6 @@
 package com.example.jetpackcomposetrae20260119.data
 
 import io.appwrite.models.Document
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 data class Subscription(
     val id: String,
@@ -16,16 +14,24 @@ data class Subscription(
     val updatedAt: String
 ) {
     companion object {
-        fun fromDocument(document: Document<Map<String, Any>>): Subscription {
-            val data = document.data
+        fun fromRow(rowId: String, data: Map<String, Any>, createdAt: String = "", updatedAt: String = ""): Subscription {
             return Subscription(
-                id = document.id,
+                id = rowId,
                 name = data["name"] as? String ?: "",
                 site = data["site"] as? String ?: "",
                 price = (data["price"] as? Number)?.toInt() ?: 0,
                 nextDate = data["nextdate"] as? String ?: "",
                 note = data["note"] as? String ?: "",
                 account = data["account"] as? String ?: "",
+                createdAt = createdAt,
+                updatedAt = updatedAt
+            )
+        }
+
+        fun fromDocument(document: Document<Map<String, Any>>): Subscription {
+            return fromRow(
+                rowId = document.id,
+                data = document.data,
                 createdAt = document.createdAt,
                 updatedAt = document.updatedAt
             )

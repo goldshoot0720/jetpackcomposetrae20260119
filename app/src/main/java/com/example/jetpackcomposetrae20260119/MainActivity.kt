@@ -38,9 +38,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -181,7 +180,7 @@ private fun HomeScreen(
         HomeTab("油價觀測", "Oil", Icons.Default.Refresh),
         HomeTab("美債追蹤", "US Debt", Icons.Default.DateRange),
         HomeTab("醉蝦結婚理由", "Marriage", Icons.Default.Info),
-        HomeTab("鋒兄比價", "Price", Icons.Default.Refresh)
+        HomeTab("鋒兄工具", "Tools", Icons.Default.Refresh)
     )
 
     Column(

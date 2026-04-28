@@ -244,6 +244,16 @@ private fun LazyListScope.homeHeaderSection(
     birthdayEasterEgg: BirthdayEasterEgg?,
     sleepReminder: SleepReminder?
 ) {
+    if (sleepReminder != null) {
+        item {
+            SleepReminderCard(sleepReminder)
+        }
+
+        item {
+            Spacer(modifier = Modifier.padding(top = 14.dp))
+        }
+    }
+
     item {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -293,15 +303,6 @@ private fun LazyListScope.homeHeaderSection(
         }
         item {
             BirthdayEasterEggCard(birthdayEasterEgg)
-        }
-    }
-
-    if (sleepReminder != null) {
-        item {
-            Spacer(modifier = Modifier.padding(top = 14.dp))
-        }
-        item {
-            SleepReminderCard(sleepReminder)
         }
     }
 
@@ -493,8 +494,14 @@ private data class SleepReminder(
     val currentDateLabel: String,
     val currentTimeLabel: String,
     val reminderCount: Int,
-    val guidance: String
+    val guidance: String,
+    val tone: SleepReminderTone
 )
+
+private enum class SleepReminderTone {
+    Yellow,
+    Red
+}
 
 private fun rememberBirthdayEasterEgg(today: LocalDate): BirthdayEasterEgg? {
     return when {
@@ -516,58 +523,79 @@ private fun rememberBirthdayEasterEgg(today: LocalDate): BirthdayEasterEgg? {
 
 @Composable
 private fun SleepReminderCard(reminder: SleepReminder) {
+    val colors = when (reminder.tone) {
+        SleepReminderTone.Yellow -> listOf(
+            Color(0xFFFFC928),
+            Color(0xFFFFE27A),
+            Color(0xFFFFF0B8)
+        )
+        SleepReminderTone.Red -> listOf(
+            Color(0xFFB91C1C),
+            Color(0xFFDC2626),
+            Color(0xFFFF8A80)
+        )
+    }
+    val titleColor = when (reminder.tone) {
+        SleepReminderTone.Yellow -> Midnight
+        SleepReminderTone.Red -> Color.White
+    }
+    val bodyColor = when (reminder.tone) {
+        SleepReminderTone.Yellow -> Midnight.copy(alpha = 0.82f)
+        SleepReminderTone.Red -> Color.White.copy(alpha = 0.86f)
+    }
+    val badgeColor = when (reminder.tone) {
+        SleepReminderTone.Yellow -> Color(0xFF7A4A00)
+        SleepReminderTone.Red -> Color(0xFFFFE1E1)
+    }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(30.dp),
+        shape = RoundedCornerShape(22.dp),
         color = Color.Transparent
     ) {
         Box(
             modifier = Modifier
                 .background(
                     brush = Brush.linearGradient(
-                        colors = listOf(
-                            Midnight,
-                            Color(0xFF243248),
-                            Color(0xFF506A84)
-                        ),
+                        colors = colors,
                         start = Offset.Zero,
                         end = Offset(900f, 320f)
                     ),
-                    shape = RoundedCornerShape(30.dp)
+                    shape = RoundedCornerShape(22.dp)
                 )
-                .padding(horizontal = 20.dp, vertical = 18.dp)
+                .padding(horizontal = 18.dp, vertical = 16.dp)
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "睡眠提示",
+                    text = "睡眠警告",
                     style = MaterialTheme.typography.labelLarge,
-                    color = Color(0xFFFFD27A)
+                    color = badgeColor
                 )
                 Text(
-                    text = "該準備睡覺了",
+                    text = "請入睡",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = Fog
+                    color = titleColor
                 )
                 Text(
                     text = reminder.guidance,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Fog.copy(alpha = 0.78f)
+                    color = bodyColor
                 )
                 Spacer(modifier = Modifier.padding(top = 4.dp))
                 Text(
                     text = "今天日期 ${reminder.currentDateLabel}",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
+                    color = bodyColor
                 )
                 Text(
                     text = "現在時刻 ${reminder.currentTimeLabel}",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
+                    color = bodyColor
                 )
                 Text(
                     text = "提示次數 第 ${reminder.reminderCount} 次",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color(0xFFFFE08A)
+                    color = titleColor
                 )
             }
         }
@@ -578,28 +606,28 @@ private fun calculateSleepReminder(now: LocalDateTime): SleepReminder? {
     val hour = now.hour
     val minute = now.minute
     val totalMinutes = hour * 60 + minute
-    if (totalMinutes < 0 || totalMinutes > 240) {
-        return null
+    val tone = when (hour) {
+        in 0..2 -> SleepReminderTone.Yellow
+        in 3..6 -> SleepReminderTone.Red
+        else -> return null
     }
 
     val reminderCount = when {
-        totalMinutes < 120 -> (totalMinutes / 30) + 1
-        totalMinutes < 240 -> 5 + ((totalMinutes - 120) / 15)
-        else -> 13
+        hour in 0..2 -> (totalMinutes / 30) + 1
+        else -> 7 + ((totalMinutes - 180) / 15)
     }
 
-    val guidance = when {
-        totalMinutes == 0 -> "0 點第一次提示，今天先早點休息。"
-        totalMinutes < 120 -> "0 點到 2 點每 30 分鐘提醒一次，現在已經有點晚了。"
-        totalMinutes < 240 -> "2 點到 4 點每 15 分鐘提醒一次，真的該去睡了。"
-        else -> "4 點最後一次提示，現在該立刻收工休息。"
+    val guidance = when (tone) {
+        SleepReminderTone.Yellow -> "上午 0 點至 2 點，首頁最上方顯示黃色警告。"
+        SleepReminderTone.Red -> "上午 3 點至 6 點，首頁最上方顯示紅色警告。"
     }
 
     return SleepReminder(
         currentDateLabel = now.format(DateTimeFormatter.ofPattern("yyyy/MM/dd")),
         currentTimeLabel = now.format(DateTimeFormatter.ofPattern("HH:mm")),
         reminderCount = reminderCount,
-        guidance = guidance
+        guidance = guidance,
+        tone = tone
     )
 }
 

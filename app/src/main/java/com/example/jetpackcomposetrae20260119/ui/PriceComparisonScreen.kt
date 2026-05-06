@@ -263,6 +263,12 @@ private fun InputCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
                 singleLine = true,
+                trailingIcon = {
+                    VoiceInputTrailingIcon(
+                        fieldLabel = "鋒兄比價商品網址或關鍵字",
+                        onConfirmedText = onLinkChanged
+                    )
+                },
                 label = { Text("商品網址") }
             )
 
@@ -523,6 +529,12 @@ private fun PhonePriceTool() {
                 label = { Text("搜尋手機") },
                 leadingIcon = {
                     Icon(imageVector = Icons.Default.Search, contentDescription = null)
+                },
+                trailingIcon = {
+                    VoiceInputTrailingIcon(
+                        fieldLabel = "手機比價搜尋",
+                        onConfirmedText = { query = it }
+                    )
                 }
             )
 

@@ -48,6 +48,8 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.jetpackcomposetrae20260119.data.FengFinanceQuote
+import com.example.jetpackcomposetrae20260119.data.FengFinanceRepository
 import com.example.jetpackcomposetrae20260119.data.FengTubeChannelFeed
 import com.example.jetpackcomposetrae20260119.data.FengTubeRepository
 import com.example.jetpackcomposetrae20260119.data.FengTubeVideo
@@ -64,7 +66,8 @@ import kotlin.math.max
 @Composable
 fun PriceComparisonScreen(
     headerContent: LazyListScope.() -> Unit = {},
-    fengTubeViewModel: FengTubeViewModel? = null
+    fengTubeViewModel: FengTubeViewModel? = null,
+    fengFinanceViewModel: FengFinanceViewModel? = null
 ) {
     var activeTool by rememberSaveable { mutableStateOf(FengTool.GeneralPrice) }
 
@@ -94,6 +97,7 @@ fun PriceComparisonScreen(
                 FengTool.GeneralPrice -> generalPriceItems()
                 FengTool.PhonePrice -> phonePriceItems()
                 FengTool.FengTube -> fengTubeItems(fengTubeViewModel)
+                FengTool.FengFinance -> fengFinanceItems(fengFinanceViewModel)
             }
 
             item {
@@ -118,6 +122,12 @@ private fun LazyListScope.phonePriceItems() {
 private fun LazyListScope.fengTubeItems(viewModel: FengTubeViewModel?) {
     item {
         FengTubeTool(viewModel)
+    }
+}
+
+private fun LazyListScope.fengFinanceItems(viewModel: FengFinanceViewModel?) {
+    item {
+        FengFinanceTool(viewModel)
     }
 }
 
@@ -778,11 +788,23 @@ private fun FengTubeChannelCard(feed: FengTubeChannelFeed) {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = feed.channelTitle,
-                style = MaterialTheme.typography.titleMedium,
-                color = Midnight
-            )
+            val downfallIndex = feed.downfallIndexNumberFromTitle()
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = feed.channelTitle,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Midnight,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (downfallIndex != null) {
+                    FinanceBadge("更新 $downfallIndex", Color(0xFFB91C1C))
+                }
+            }
             Text(
                 text = feed.channel.sourceUrl,
                 style = MaterialTheme.typography.bodySmall,
@@ -839,6 +861,181 @@ private fun FengTubeVideoRow(
     }
 }
 
+private fun FengTubeChannelFeed.downfallIndexNumberFromTitle(): String? {
+    val isHenrenChannel = channel.sourceUrl.contains("henren778", ignoreCase = true) ||
+        channelTitle.contains("狠人")
+    if (!isHenrenChannel) return null
+
+    val patterns = listOf(
+        Regex("""倒台指[數数]\D*(\d+(?:\.\d+)?)"""),
+        Regex("""(\d+(?:\.\d+)?)\D*倒台指[數数]""")
+    )
+
+    return videos.firstNotNullOfOrNull { video ->
+        patterns.firstNotNullOfOrNull { pattern ->
+            pattern.find(video.title)?.groupValues?.getOrNull(1)
+        }
+    }
+}
+
+@Composable
+private fun FengFinanceTool(viewModel: FengFinanceViewModel?) {
+    if (viewModel == null) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            shape = RoundedCornerShape(30.dp),
+            color = Porcelain
+        ) {
+            Text(
+                modifier = Modifier.padding(20.dp),
+                text = "鋒兄金融資料尚未啟用。",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Slate
+            )
+        }
+        return
+    }
+
+    val quotes by viewModel.quotes.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+        shape = RoundedCornerShape(30.dp),
+        color = Porcelain
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            SectionTitle(
+                title = "鋒兄金融",
+                subtitle = "追蹤 CNBC 指數、能源、貴金屬、美債、波動率與加密貨幣報價。"
+            )
+
+            Button(
+                onClick = { viewModel.refresh() },
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F766E))
+            ) {
+                Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(if (isLoading) "更新中" else "更新")
+            }
+
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage.orEmpty(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFFB91C1C)
+                )
+            }
+
+            if (quotes.isEmpty() && isLoading) {
+                Text(
+                    text = "正在讀取 CNBC 金融報價...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Slate
+                )
+            }
+
+            quotes.forEach { quote ->
+                FengFinanceQuoteCard(quote)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FengFinanceQuoteCard(quote: FengFinanceQuote) {
+    val uriHandler = LocalUriHandler.current
+
+    Surface(
+        onClick = { uriHandler.openUri(quote.instrument.sourceUrl) },
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = Fog,
+        border = BorderStroke(1.dp, Outline)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = quote.instrument.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Midnight,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = quote.instrument.symbol,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Slate
+                    )
+                }
+
+                when {
+                    quote.isNewHigh -> FinanceBadge("創新高", Color(0xFF047857))
+                    quote.isNewLow -> FinanceBadge("創新低", Color(0xFFB91C1C))
+                }
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                StatTile("最新", quote.priceLabel, Modifier.weight(1f))
+                StatTile("漲跌", quote.changeLabel, Modifier.weight(1f))
+            }
+
+            Text(
+                text = "更新 ${FengFinanceRepository.formatFetchedAt(quote.fetchedAt)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = Copper
+            )
+
+            if (quote.errorMessage != null) {
+                Text(
+                    text = "讀取提示：${quote.errorMessage}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFFB91C1C)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FinanceBadge(
+    label: String,
+    color: Color
+) {
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        color = color.copy(alpha = 0.12f),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.35f))
+    ) {
+        Text(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = color,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
 @Composable
 private fun SectionTitle(title: String, subtitle: String) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -890,7 +1087,8 @@ private fun StatTile(
 private enum class FengTool(val title: String) {
     GeneralPrice("鋒兄比價"),
     PhonePrice("手機比價"),
-    FengTube("鋒兄Tube")
+    FengTube("鋒兄Tube"),
+    FengFinance("鋒兄金融")
 }
 
 private data class PriceReport(

@@ -48,7 +48,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -75,6 +77,7 @@ import com.example.jetpackcomposetrae20260119.ui.SubscriptionScreen
 import com.example.jetpackcomposetrae20260119.ui.SubscriptionViewModel
 import com.example.jetpackcomposetrae20260119.ui.USDebtScreen
 import com.example.jetpackcomposetrae20260119.ui.USDebtViewModel
+import com.example.jetpackcomposetrae20260119.ui.VoiceInputActionButton
 import com.example.jetpackcomposetrae20260119.ui.theme.Cloud
 import com.example.jetpackcomposetrae20260119.ui.theme.Copper
 import com.example.jetpackcomposetrae20260119.ui.theme.CopperGlow
@@ -83,6 +86,8 @@ import com.example.jetpackcomposetrae20260119.ui.theme.Ink
 import com.example.jetpackcomposetrae20260119.ui.theme.Jetpackcomposetrae20260119Theme
 import com.example.jetpackcomposetrae20260119.ui.theme.Midnight
 import com.example.jetpackcomposetrae20260119.ui.theme.Mist
+import com.example.jetpackcomposetrae20260119.ui.theme.Porcelain
+import com.example.jetpackcomposetrae20260119.ui.theme.Slate
 import com.example.jetpackcomposetrae20260119.worker.NotificationWorker
 import com.example.jetpackcomposetrae20260119.worker.WorkerScheduler
 import java.time.LocalDate
@@ -294,6 +299,17 @@ private fun LazyListScope.homeHeaderSection(
     }
 
     item {
+        FengBroVoiceCommandCard(
+            tabs = tabs,
+            onTabSelected = onTabSelected
+        )
+    }
+
+    item {
+        Spacer(modifier = Modifier.padding(top = 14.dp))
+    }
+
+    item {
         FengBroAsciiCard()
     }
 
@@ -351,6 +367,71 @@ private fun LazyListScope.homeHeaderSection(
     item {
         Spacer(modifier = Modifier.padding(top = 10.dp))
     }
+}
+
+@Composable
+private fun FengBroVoiceCommandCard(
+    tabs: List<HomeTab>,
+    onTabSelected: (Int) -> Unit
+) {
+    var feedback by remember { mutableStateOf("可說：首頁、儀表、訂閱、油價、美債、結婚、鋒兄工具、手機比價。") }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = Porcelain
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = "鋒兄語音輸入",
+                style = MaterialTheme.typography.titleMedium,
+                color = Midnight
+            )
+            Text(
+                text = feedback,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Slate
+            )
+            VoiceInputActionButton(
+                label = "語音選單",
+                fieldLabel = "鋒兄首頁與儀表選單"
+            ) { spoken ->
+                val targetIndex = findTabIndexFromVoice(spoken, tabs)
+                if (targetIndex != null) {
+                    onTabSelected(targetIndex)
+                    feedback = "已切換：${tabs[targetIndex].title}（$spoken）"
+                } else {
+                    feedback = "已辨識：$spoken。這個 Android 版目前尚未提供對應選單。"
+                }
+            }
+        }
+    }
+}
+
+private fun findTabIndexFromVoice(
+    spoken: String,
+    tabs: List<HomeTab>
+): Int? {
+    val normalized = spoken.lowercase()
+    val keywordGroups = listOf(
+        listOf("首頁", "儀表", "dashboard", "home", "電池", "battery"),
+        listOf("訂閱", "subscription", "續約", "提醒"),
+        listOf("油價", "oil", "汽油"),
+        listOf("美債", "us debt", "債務"),
+        listOf("醉蝦", "結婚", "539", "彩券"),
+        listOf("鋒兄", "工具", "比價", "手機", "price")
+    )
+
+    keywordGroups.forEachIndexed { index, keywords ->
+        if (index < tabs.size && keywords.any { normalized.contains(it) }) {
+            return index
+        }
+    }
+
+    return null
 }
 
 @Composable

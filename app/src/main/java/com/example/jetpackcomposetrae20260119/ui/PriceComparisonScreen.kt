@@ -30,6 +30,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,9 +44,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.jetpackcomposetrae20260119.data.FengTubeChannelFeed
+import com.example.jetpackcomposetrae20260119.data.FengTubeRepository
+import com.example.jetpackcomposetrae20260119.data.FengTubeVideo
 import com.example.jetpackcomposetrae20260119.ui.theme.Cloud
 import com.example.jetpackcomposetrae20260119.ui.theme.Copper
 import com.example.jetpackcomposetrae20260119.ui.theme.Fog
@@ -58,7 +63,8 @@ import kotlin.math.max
 
 @Composable
 fun PriceComparisonScreen(
-    headerContent: LazyListScope.() -> Unit = {}
+    headerContent: LazyListScope.() -> Unit = {},
+    fengTubeViewModel: FengTubeViewModel? = null
 ) {
     var activeTool by rememberSaveable { mutableStateOf(FengTool.GeneralPrice) }
 
@@ -87,6 +93,7 @@ fun PriceComparisonScreen(
             when (activeTool) {
                 FengTool.GeneralPrice -> generalPriceItems()
                 FengTool.PhonePrice -> phonePriceItems()
+                FengTool.FengTube -> fengTubeItems(fengTubeViewModel)
             }
 
             item {
@@ -105,6 +112,12 @@ private fun LazyListScope.generalPriceItems() {
 private fun LazyListScope.phonePriceItems() {
     item {
         PhonePriceTool()
+    }
+}
+
+private fun LazyListScope.fengTubeItems(viewModel: FengTubeViewModel?) {
+    item {
+        FengTubeTool(viewModel)
     }
 }
 
@@ -679,6 +692,154 @@ private fun PhonePriceCard(phone: PhonePrice) {
 }
 
 @Composable
+private fun FengTubeTool(viewModel: FengTubeViewModel?) {
+    if (viewModel == null) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            shape = RoundedCornerShape(30.dp),
+            color = Porcelain
+        ) {
+            Text(
+                modifier = Modifier.padding(20.dp),
+                text = "鋒兄Tube資料尚未啟用。",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Slate
+            )
+        }
+        return
+    }
+
+    val feeds by viewModel.feeds.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+        shape = RoundedCornerShape(30.dp),
+        color = Porcelain
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            SectionTitle(
+                title = "鋒兄Tube",
+                subtitle = "追蹤指定頻道最新影片，每個頻道顯示最新 10 部。"
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(
+                    onClick = { viewModel.refresh() },
+                    shape = RoundedCornerShape(18.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE28A2B))
+                ) {
+                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(if (isLoading) "更新中" else "更新")
+                }
+            }
+
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage.orEmpty(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFFB91C1C)
+                )
+            }
+
+            if (feeds.isEmpty() && isLoading) {
+                Text(
+                    text = "正在讀取鋒兄Tube頻道...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Slate
+                )
+            }
+
+            feeds.forEach { feed ->
+                FengTubeChannelCard(feed)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FengTubeChannelCard(feed: FengTubeChannelFeed) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = Fog,
+        border = BorderStroke(1.dp, Outline)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = feed.channelTitle,
+                style = MaterialTheme.typography.titleMedium,
+                color = Midnight
+            )
+            Text(
+                text = feed.channel.sourceUrl,
+                style = MaterialTheme.typography.bodySmall,
+                color = Slate,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            if (feed.errorMessage != null && feed.videos.isEmpty()) {
+                Text(
+                    text = "讀取失敗：${feed.errorMessage}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFFB91C1C)
+                )
+            }
+
+            feed.videos.take(10).forEachIndexed { index, video ->
+                FengTubeVideoRow(index + 1, video)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FengTubeVideoRow(
+    index: Int,
+    video: FengTubeVideo
+) {
+    val uriHandler = LocalUriHandler.current
+
+    Surface(
+        onClick = { uriHandler.openUri(video.url) },
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White.copy(alpha = 0.72f)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "$index. ${video.title}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Ink,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = FengTubeRepository.formatPublishedAt(video.publishedAt),
+                style = MaterialTheme.typography.bodySmall,
+                color = Copper
+            )
+        }
+    }
+}
+
+@Composable
 private fun SectionTitle(title: String, subtitle: String) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
@@ -728,7 +889,8 @@ private fun StatTile(
 
 private enum class FengTool(val title: String) {
     GeneralPrice("鋒兄比價"),
-    PhonePrice("手機比價")
+    PhonePrice("手機比價"),
+    FengTube("鋒兄Tube")
 }
 
 private data class PriceReport(

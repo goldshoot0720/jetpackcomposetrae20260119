@@ -46,6 +46,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -90,6 +91,9 @@ import com.example.jetpackcomposetrae20260119.ui.theme.Porcelain
 import com.example.jetpackcomposetrae20260119.ui.theme.Slate
 import com.example.jetpackcomposetrae20260119.worker.NotificationWorker
 import com.example.jetpackcomposetrae20260119.worker.WorkerScheduler
+import com.example.jetpackcomposetrae20260119.data.FengTubeVideo
+import com.example.jetpackcomposetrae20260119.data.FengTubeRepository
+import com.example.jetpackcomposetrae20260119.ui.FengTubeViewModel
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -101,6 +105,7 @@ class MainActivity : ComponentActivity() {
     private val oilPriceViewModel: OilPriceViewModel by viewModels()
     private val usDebtViewModel: USDebtViewModel by viewModels()
     private val lotteryComparisonViewModel: LotteryComparisonViewModel by viewModels()
+    private val fengTubeViewModel: FengTubeViewModel by viewModels()
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -129,7 +134,8 @@ class MainActivity : ComponentActivity() {
                         subscriptionViewModel = subscriptionViewModel,
                         oilPriceViewModel = oilPriceViewModel,
                         usDebtViewModel = usDebtViewModel,
-                        lotteryComparisonViewModel = lotteryComparisonViewModel
+                        lotteryComparisonViewModel = lotteryComparisonViewModel,
+                        fengTubeViewModel = fengTubeViewModel
                     )
                 }
             }
@@ -166,7 +172,8 @@ private fun HomeScreen(
     subscriptionViewModel: SubscriptionViewModel,
     oilPriceViewModel: OilPriceViewModel,
     usDebtViewModel: USDebtViewModel,
-    lotteryComparisonViewModel: LotteryComparisonViewModel
+    lotteryComparisonViewModel: LotteryComparisonViewModel,
+    fengTubeViewModel: FengTubeViewModel
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     val now by produceState(initialValue = LocalDateTime.now()) {
@@ -178,6 +185,7 @@ private fun HomeScreen(
     val today = now.toLocalDate()
     val birthdayEasterEgg = rememberBirthdayEasterEgg(today)
     val sleepReminder = calculateSleepReminder(now)
+    val recentTubeVideos by fengTubeViewModel.recentVideos.collectAsState()
 
     val tabs = listOf(
         HomeTab("電池選單", "Battery", Icons.Default.DateRange),
@@ -208,7 +216,8 @@ private fun HomeScreen(
                     selectedTab = selectedTab,
                     onTabSelected = { selectedTab = it },
                     birthdayEasterEgg = birthdayEasterEgg,
-                    sleepReminder = sleepReminder
+                    sleepReminder = sleepReminder,
+                    recentTubeVideos = recentTubeVideos
                 )
             }
 
@@ -234,7 +243,8 @@ private fun HomeScreen(
                     headerContent = headerContent
                 )
                 else -> PriceComparisonScreen(
-                    headerContent = headerContent
+                    headerContent = headerContent,
+                    fengTubeViewModel = fengTubeViewModel
                 )
             }
         }
@@ -247,7 +257,8 @@ private fun LazyListScope.homeHeaderSection(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit,
     birthdayEasterEgg: BirthdayEasterEgg?,
-    sleepReminder: SleepReminder?
+    sleepReminder: SleepReminder?,
+    recentTubeVideos: List<FengTubeVideo>
 ) {
     if (sleepReminder != null) {
         item {
@@ -296,6 +307,16 @@ private fun LazyListScope.homeHeaderSection(
 
     item {
         Spacer(modifier = Modifier.padding(top = 14.dp))
+    }
+
+    if (recentTubeVideos.isNotEmpty()) {
+        item {
+            FengTubeNotificationCard(recentTubeVideos)
+        }
+
+        item {
+            Spacer(modifier = Modifier.padding(top = 14.dp))
+        }
     }
 
     item {
@@ -366,6 +387,49 @@ private fun LazyListScope.homeHeaderSection(
 
     item {
         Spacer(modifier = Modifier.padding(top = 10.dp))
+    }
+}
+
+@Composable
+private fun FengTubeNotificationCard(videos: List<FengTubeVideo>) {
+    val preview = videos.take(3)
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = Color(0xFFFFF1E8)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "鋒兄Tube新片提醒",
+                style = MaterialTheme.typography.titleMedium,
+                color = Copper
+            )
+            Text(
+                text = "最近 3 天有 ${videos.size} 部新影片。",
+                style = MaterialTheme.typography.headlineSmall,
+                color = Midnight
+            )
+            preview.forEach { video ->
+                Text(
+                    text = "${video.channelTitle}：${video.title}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Ink,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            if (videos.size > preview.size) {
+                Text(
+                    text = "還有 ${videos.size - preview.size} 部，請到鋒兄工具的鋒兄Tube查看。",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Slate
+                )
+            }
+        }
     }
 }
 

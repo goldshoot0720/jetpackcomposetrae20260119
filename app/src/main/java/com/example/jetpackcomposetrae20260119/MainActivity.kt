@@ -69,6 +69,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.jetpackcomposetrae20260119.ui.BatteryScreen
 import com.example.jetpackcomposetrae20260119.ui.BatteryViewModel
+import com.example.jetpackcomposetrae20260119.ui.FengFinanceViewModel
 import com.example.jetpackcomposetrae20260119.ui.LotteryComparisonScreen
 import com.example.jetpackcomposetrae20260119.ui.LotteryComparisonViewModel
 import com.example.jetpackcomposetrae20260119.ui.OilMonitoringScreen
@@ -106,6 +107,7 @@ class MainActivity : ComponentActivity() {
     private val usDebtViewModel: USDebtViewModel by viewModels()
     private val lotteryComparisonViewModel: LotteryComparisonViewModel by viewModels()
     private val fengTubeViewModel: FengTubeViewModel by viewModels()
+    private val fengFinanceViewModel: FengFinanceViewModel by viewModels()
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -135,7 +137,8 @@ class MainActivity : ComponentActivity() {
                         oilPriceViewModel = oilPriceViewModel,
                         usDebtViewModel = usDebtViewModel,
                         lotteryComparisonViewModel = lotteryComparisonViewModel,
-                        fengTubeViewModel = fengTubeViewModel
+                        fengTubeViewModel = fengTubeViewModel,
+                        fengFinanceViewModel = fengFinanceViewModel
                     )
                 }
             }
@@ -173,7 +176,8 @@ private fun HomeScreen(
     oilPriceViewModel: OilPriceViewModel,
     usDebtViewModel: USDebtViewModel,
     lotteryComparisonViewModel: LotteryComparisonViewModel,
-    fengTubeViewModel: FengTubeViewModel
+    fengTubeViewModel: FengTubeViewModel,
+    fengFinanceViewModel: FengFinanceViewModel
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     val now by produceState(initialValue = LocalDateTime.now()) {
@@ -244,7 +248,8 @@ private fun HomeScreen(
                 )
                 else -> PriceComparisonScreen(
                     headerContent = headerContent,
-                    fengTubeViewModel = fengTubeViewModel
+                    fengTubeViewModel = fengTubeViewModel,
+                    fengFinanceViewModel = fengFinanceViewModel
                 )
             }
         }

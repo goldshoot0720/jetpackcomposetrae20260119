@@ -107,6 +107,18 @@ private val marriageReasonOptions = listOf(
     )
 )
 
+private fun findMarriageReasonFromVoice(spoken: String): MarriageReasonOption? {
+    val normalized = spoken.lowercase()
+    return marriageReasonOptions.firstOrNull { option ->
+        normalized.contains(option.title.lowercase()) ||
+            option.tags.any { tag -> normalized.contains(tag.lowercase()) } ||
+            option.summary.lowercase().contains(normalized) ||
+            option.punchline.lowercase().contains(normalized)
+    } ?: marriageReasonOptions.firstOrNull { option ->
+        option.title.lowercase().split(" ").any { it.isNotBlank() && normalized.contains(it) }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun LotteryComparisonScreen(
@@ -249,6 +261,15 @@ fun LotteryComparisonScreen(
                                         }
                                     )
                                 }
+                            }
+                        }
+
+                        VoiceInputActionButton(
+                            label = "語音選理由",
+                            fieldLabel = "鋒兄結婚理由"
+                        ) { spoken ->
+                            findMarriageReasonFromVoice(spoken)?.let { option ->
+                                selectedId = option.id
                             }
                         }
                     }

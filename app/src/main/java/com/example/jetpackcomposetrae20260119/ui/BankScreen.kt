@@ -12,11 +12,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -35,8 +43,11 @@ import com.example.jetpackcomposetrae20260119.ui.theme.Slate
 fun BankScreen(
     headerContent: LazyListScope.() -> Unit = {}
 ) {
-    val bankAccounts = remember { taiwanBankAccounts() }
-    val electronicTickets = remember { electronicTicketAccounts() }
+    val bankAccounts = remember { mutableStateListOf<BankAccountItem>().apply { addAll(taiwanBankAccounts()) } }
+    val electronicTickets = remember { mutableStateListOf<BankAccountItem>().apply { addAll(electronicTicketAccounts()) } }
+    var accountName by rememberSaveable { mutableStateOf("") }
+    var accountKind by rememberSaveable { mutableStateOf("銀行") }
+    var accountAsset by rememberSaveable { mutableStateOf("") }
     val bankAssetTotal = bankAccounts.sumOf { it.assetAmount }
     val electronicTicketAssetTotal = electronicTickets.sumOf { it.assetAmount }
     val allAssetTotal = bankAssetTotal + electronicTicketAssetTotal
@@ -56,6 +67,37 @@ fun BankScreen(
 
         item {
             BankRuleCard()
+        }
+
+        item {
+            AddBankAccountCard(
+                name = accountName,
+                kind = accountKind,
+                asset = accountAsset,
+                onNameChanged = { accountName = it },
+                onKindChanged = { accountKind = it },
+                onAssetChanged = { accountAsset = it },
+                onAdd = {
+                    val cleanName = accountName.trim()
+                    if (cleanName.isNotBlank()) {
+                        val isElectronicTicket = accountKind.contains("票證") ||
+                            accountKind.contains("電子")
+                        val item = BankAccountItem(
+                            name = cleanName,
+                            note = if (isElectronicTicket) "電子票證" else "銀行帳戶",
+                            assetAmount = accountAsset.toLongOrNull() ?: 0L
+                        )
+                        if (isElectronicTicket) {
+                            electronicTickets.add(item)
+                        } else {
+                            bankAccounts.add(item)
+                        }
+                        accountName = ""
+                        accountKind = "銀行"
+                        accountAsset = ""
+                    }
+                }
+            )
         }
 
         item {
@@ -168,6 +210,65 @@ private fun BankRuleCard() {
                 style = MaterialTheme.typography.bodyMedium,
                 color = Ink
             )
+        }
+    }
+}
+
+@Composable
+private fun AddBankAccountCard(
+    name: String,
+    kind: String,
+    asset: String,
+    onNameChanged: (String) -> Unit,
+    onKindChanged: (String) -> Unit,
+    onAssetChanged: (String) -> Unit,
+    onAdd: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = Porcelain,
+        border = BorderStroke(1.dp, Outline)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "新增銀行(或電子票證)",
+                style = MaterialTheme.typography.titleMedium,
+                color = Midnight
+            )
+            OutlinedTextField(
+                value = name,
+                onValueChange = onNameChanged,
+                label = { Text("名稱") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = kind,
+                    onValueChange = onKindChanged,
+                    label = { Text("銀行或電子票證") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = asset,
+                    onValueChange = onAssetChanged,
+                    label = { Text("資產") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+            }
+            Button(
+                onClick = onAdd,
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F766E))
+            ) {
+                Text("新增銀行(或電子票證)")
+            }
         }
     }
 }

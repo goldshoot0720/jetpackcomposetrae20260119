@@ -198,7 +198,7 @@ private fun HomeScreen(
         HomeTab("油價觀測", "Oil", Icons.Default.Refresh),
         HomeTab("美債追蹤", "US Debt", Icons.Default.DateRange),
         HomeTab("醉蝦結婚理由", "Marriage", Icons.Default.Info),
-        HomeTab("鋒兄銀行", "Bank", Icons.Default.Info),
+        HomeTab("鋒兄銀行 (+電子票證)", "Bank", Icons.Default.Info),
         HomeTab("鋒兄工具", "Tools", Icons.Default.Refresh)
     )
 

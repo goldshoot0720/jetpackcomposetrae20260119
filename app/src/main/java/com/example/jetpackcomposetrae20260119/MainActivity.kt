@@ -838,7 +838,7 @@ private fun MenuTab(
                 text = tab.title,
                 style = MaterialTheme.typography.titleSmall,
                 color = if (selected) Fog else Ink,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
         }

@@ -69,6 +69,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.jetpackcomposetrae20260119.ui.BatteryScreen
 import com.example.jetpackcomposetrae20260119.ui.BatteryViewModel
+import com.example.jetpackcomposetrae20260119.ui.BankScreen
 import com.example.jetpackcomposetrae20260119.ui.FengFinanceViewModel
 import com.example.jetpackcomposetrae20260119.ui.LotteryComparisonScreen
 import com.example.jetpackcomposetrae20260119.ui.LotteryComparisonViewModel
@@ -197,6 +198,7 @@ private fun HomeScreen(
         HomeTab("油價觀測", "Oil", Icons.Default.Refresh),
         HomeTab("美債追蹤", "US Debt", Icons.Default.DateRange),
         HomeTab("醉蝦結婚理由", "Marriage", Icons.Default.Info),
+        HomeTab("鋒兄銀行", "Bank", Icons.Default.Info),
         HomeTab("鋒兄工具", "Tools", Icons.Default.Refresh)
     )
 
@@ -244,6 +246,9 @@ private fun HomeScreen(
                 )
                 4 -> LotteryComparisonScreen(
                     viewModel = lotteryComparisonViewModel,
+                    headerContent = headerContent
+                )
+                5 -> BankScreen(
                     headerContent = headerContent
                 )
                 else -> PriceComparisonScreen(
@@ -491,6 +496,7 @@ private fun findTabIndexFromVoice(
         listOf("油價", "oil", "汽油"),
         listOf("美債", "us debt", "債務"),
         listOf("醉蝦", "結婚", "539", "彩券"),
+        listOf("銀行", "bank", "帳戶", "電子票證", "票證", "悠遊卡", "一卡通"),
         listOf("鋒兄", "工具", "比價", "手機", "price")
     )
 

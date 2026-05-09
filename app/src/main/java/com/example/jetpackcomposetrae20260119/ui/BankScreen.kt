@@ -37,6 +37,9 @@ fun BankScreen(
 ) {
     val bankAccounts = remember { taiwanBankAccounts() }
     val electronicTickets = remember { electronicTicketAccounts() }
+    val bankAssetTotal = bankAccounts.sumOf { it.assetAmount }
+    val electronicTicketAssetTotal = electronicTickets.sumOf { it.assetAmount }
+    val allAssetTotal = bankAssetTotal + electronicTicketAssetTotal
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -45,8 +48,9 @@ fun BankScreen(
 
         item {
             BankHeroCard(
-                bankAccountCount = bankAccounts.size,
-                electronicTicketCount = electronicTickets.size
+                allAssetTotal = allAssetTotal,
+                bankAssetTotal = bankAssetTotal,
+                electronicTicketAssetTotal = electronicTicketAssetTotal
             )
         }
 
@@ -58,8 +62,8 @@ fun BankScreen(
             AccountGroupCard(
                 title = "銀行帳戶",
                 smallLabel = "台灣的銀行才是銀行喔！",
-                totalLabel = "銀行帳戶總數",
-                totalValue = bankAccounts.size,
+                totalLabel = "銀行總資產",
+                totalValue = bankAssetTotal,
                 accounts = bankAccounts
             )
         }
@@ -68,8 +72,8 @@ fun BankScreen(
             AccountGroupCard(
                 title = "電子票證",
                 smallLabel = "銀行以外的先歸類為電子票證喔！",
-                totalLabel = "電子票證總數",
-                totalValue = electronicTickets.size,
+                totalLabel = "電子票證總資產",
+                totalValue = electronicTicketAssetTotal,
                 accounts = electronicTickets
             )
         }
@@ -82,8 +86,9 @@ fun BankScreen(
 
 @Composable
 private fun BankHeroCard(
-    bankAccountCount: Int,
-    electronicTicketCount: Int
+    allAssetTotal: Long,
+    bankAssetTotal: Long,
+    electronicTicketAssetTotal: Long
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -120,9 +125,12 @@ private fun BankHeroCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = Slate
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                CountTile("銀行帳戶總數", bankAccountCount, Modifier.weight(1f))
-                CountTile("電子票證總數", electronicTicketCount, Modifier.weight(1f))
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                AssetTile("所有資產", allAssetTotal, Modifier.fillMaxWidth())
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    AssetTile("銀行總資產", bankAssetTotal, Modifier.weight(1f))
+                    AssetTile("電子票證總資產", electronicTicketAssetTotal, Modifier.weight(1f))
+                }
             }
         }
     }
@@ -146,12 +154,17 @@ private fun BankRuleCard() {
                 color = Midnight
             )
             Text(
-                text = "1. 銀行帳戶總數是帳戶總數",
+                text = "1. 所有資產是銀行總資產加上電子票證總資產",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Ink
             )
             Text(
-                text = "2. 電子票證總數是電子票證總數",
+                text = "2. 中華郵政也屬於台灣銀行",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Ink
+            )
+            Text(
+                text = "3. 銀行以外的先歸類為電子票證",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Ink
             )
@@ -164,7 +177,7 @@ private fun AccountGroupCard(
     title: String,
     smallLabel: String,
     totalLabel: String,
-    totalValue: Int,
+    totalValue: Long,
     accounts: List<BankAccountItem>
 ) {
     Surface(
@@ -193,7 +206,7 @@ private fun AccountGroupCard(
                         color = Slate
                     )
                 }
-                CountTile(totalLabel, totalValue, Modifier.weight(1f))
+                AssetTile(totalLabel, totalValue, Modifier.weight(1f))
             }
 
             accounts.forEach { account ->
@@ -204,9 +217,9 @@ private fun AccountGroupCard(
 }
 
 @Composable
-private fun CountTile(
+private fun AssetTile(
     label: String,
-    value: Int,
+    value: Long,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -226,7 +239,7 @@ private fun CountTile(
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = value.toString(),
+                text = formatAsset(value),
                 style = MaterialTheme.typography.headlineSmall,
                 color = Midnight,
                 fontWeight = FontWeight.Bold
@@ -256,13 +269,19 @@ private fun AccountRow(account: BankAccountItem) {
                 style = MaterialTheme.typography.bodySmall,
                 color = Slate
             )
+            Text(
+                text = "資產 ${formatAsset(account.assetAmount)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = Copper
+            )
         }
     }
 }
 
 private data class BankAccountItem(
     val name: String,
-    val note: String
+    val note: String,
+    val assetAmount: Long = 0L
 )
 
 private fun taiwanBankAccounts(): List<BankAccountItem> {
@@ -274,6 +293,7 @@ private fun taiwanBankAccounts(): List<BankAccountItem> {
         BankAccountItem("華南銀行", "銀行帳戶"),
         BankAccountItem("彰化銀行", "銀行帳戶"),
         BankAccountItem("兆豐銀行", "銀行帳戶"),
+        BankAccountItem("中華郵政", "銀行帳戶"),
         BankAccountItem("國泰世華銀行", "銀行帳戶"),
         BankAccountItem("玉山銀行", "銀行帳戶"),
         BankAccountItem("台新銀行", "銀行帳戶"),
@@ -293,4 +313,13 @@ private fun electronicTicketAccounts(): List<BankAccountItem> {
         BankAccountItem("Pi 拍錢包", "電子票證"),
         BankAccountItem("全支付", "電子票證")
     )
+}
+
+private fun formatAsset(value: Long): String {
+    val text = value.toString()
+        .reversed()
+        .chunked(3)
+        .joinToString(",")
+        .reversed()
+    return "NT$$text"
 }

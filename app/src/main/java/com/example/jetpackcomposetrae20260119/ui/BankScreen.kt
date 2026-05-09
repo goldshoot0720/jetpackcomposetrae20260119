@@ -111,7 +111,7 @@ private fun BankHeroCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "鋒兄銀行 (+電子票證)",
+                text = "鋒兄銀行\n(+電子票證)",
                 style = MaterialTheme.typography.headlineMedium,
                 color = Midnight
             )

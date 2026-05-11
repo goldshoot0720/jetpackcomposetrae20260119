@@ -21,15 +21,20 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -59,6 +64,26 @@ fun SubscriptionScreen(
     val subscriptions by viewModel.subscriptions.collectAsState()
     val upcomingSubscriptions by viewModel.upcomingSubscriptions.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var recentSearches by rememberSaveable { mutableStateOf(emptyList<String>()) }
+    val displayedSubscriptions = if (searchQuery.isBlank()) {
+        subscriptions
+    } else {
+        subscriptions.filter { subscription ->
+            subscription.name.contains(searchQuery, ignoreCase = true) ||
+                subscription.site.contains(searchQuery, ignoreCase = true) ||
+                subscription.note.contains(searchQuery, ignoreCase = true) ||
+                subscription.account.contains(searchQuery, ignoreCase = true)
+        }
+    }
+    val submitSearch: (String) -> Unit = { raw ->
+        val query = raw.trim()
+        if (query.isNotBlank()) {
+            searchQuery = query
+            recentSearches = (listOf(query) + recentSearches.filterNot { it.equals(query, ignoreCase = true) })
+                .take(8)
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -85,6 +110,17 @@ fun SubscriptionScreen(
                 }
             }
 
+            item {
+                SubscriptionSearchCard(
+                    searchQuery = searchQuery,
+                    recentSearches = recentSearches,
+                    resultCount = displayedSubscriptions.size,
+                    onSearchQueryChanged = { searchQuery = it },
+                    onSubmitSearch = submitSearch,
+                    onClearSearch = { searchQuery = "" }
+                )
+            }
+
             if (isLoading && subscriptions.isEmpty()) {
                 item {
                     Box(
@@ -108,9 +144,106 @@ fun SubscriptionScreen(
                 item {
                     EmptySubscriptionState()
                 }
+            } else if (displayedSubscriptions.isEmpty()) {
+                item {
+                    EmptySearchState(searchQuery)
+                }
             } else {
-                items(subscriptions) { subscription ->
+                items(displayedSubscriptions) { subscription ->
                     SubscriptionItem(subscription)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SubscriptionSearchCard(
+    searchQuery: String,
+    recentSearches: List<String>,
+    resultCount: Int,
+    onSearchQueryChanged: (String) -> Unit,
+    onSubmitSearch: (String) -> Unit,
+    onClearSearch: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(26.dp),
+        color = Porcelain,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "搜尋訂閱",
+                style = MaterialTheme.typography.titleMedium,
+                color = Midnight
+            )
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = onSearchQueryChanged,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("訂閱名稱、網站、帳號或備註") },
+                singleLine = true
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(
+                    onClick = { onSubmitSearch(searchQuery) },
+                    shape = RoundedCornerShape(18.dp)
+                ) {
+                    Text("搜尋")
+                }
+                Surface(
+                    onClick = onClearSearch,
+                    shape = RoundedCornerShape(18.dp),
+                    color = Fog
+                ) {
+                    Text(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        text = "清除",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Slate
+                    )
+                }
+            }
+            Text(
+                text = "目前顯示 $resultCount 筆",
+                style = MaterialTheme.typography.bodySmall,
+                color = Slate
+            )
+            Text(
+                text = "最近搜尋紀錄",
+                style = MaterialTheme.typography.labelLarge,
+                color = Copper
+            )
+            if (recentSearches.isEmpty()) {
+                Text(
+                    text = "尚無搜尋紀錄。",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Slate
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    recentSearches.forEach { query ->
+                        Surface(
+                            onClick = { onSubmitSearch(query) },
+                            shape = RoundedCornerShape(16.dp),
+                            color = Fog,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                text = query,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Ink,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -258,6 +391,31 @@ fun UpcomingNotificationBanner(upcoming: List<Subscription>) {
                     DueBadge(daysUntilDue = daysUntil(sub.nextDate))
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun EmptySearchState(searchQuery: String) {
+    Surface(
+        shape = RoundedCornerShape(30.dp),
+        color = Porcelain,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 30.dp)
+        ) {
+            Text(
+                text = "找不到符合的訂閱",
+                style = MaterialTheme.typography.titleLarge,
+                color = Ink
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "「$searchQuery」沒有符合的訂閱項目，可清除搜尋回到完整清單。",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Slate
+            )
         }
     }
 }

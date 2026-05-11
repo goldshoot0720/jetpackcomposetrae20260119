@@ -86,6 +86,9 @@ class FengFinanceRepository(context: Context) {
         val price = parsePrice(quoteText)
         val change = parseChange(quoteText)
         val flags = updateHighLowFlags(instrument.symbol, price)
+        val isHistoricShillerHigh = instrument.symbol == SHILLER_PE_SYMBOL &&
+            price != null &&
+            price > SHILLER_PE_HISTORIC_MAX
 
         return FengFinanceQuote(
             instrument = instrument,
@@ -93,7 +96,7 @@ class FengFinanceRepository(context: Context) {
             numericPrice = price,
             changeLabel = change ?: "--",
             fetchedAt = Instant.now().toString(),
-            isNewHigh = flags.first,
+            isNewHigh = flags.first || isHistoricShillerHigh,
             isNewLow = flags.second
         )
     }
@@ -127,6 +130,7 @@ class FengFinanceRepository(context: Context) {
             Regex(""""price"\s*:\s*"?(-?\d[\d,]*(?:\.\d+)?)"?"""),
             Regex(""""regularMarketPrice"\s*:\s*"?(-?\d[\d,]*(?:\.\d+)?)"?"""),
             Regex(""""previousClose"\s*:\s*"?(-?\d[\d,]*(?:\.\d+)?)"?"""),
+            Regex("""Current Shiller PE Ratio:\s*(-?\d[\d,]*(?:\.\d+)?)""", RegexOption.IGNORE_CASE),
             Regex("""QuoteStrip-lastPrice[^>]*>\s*([^<]+)"""),
             Regex("""Latest Price[^0-9-]*(-?\d[\d,]*(?:\.\d+)?)""", RegexOption.IGNORE_CASE)
         )
@@ -144,7 +148,8 @@ class FengFinanceRepository(context: Context) {
         val value = listOf(
             Regex(""""change"\s*:\s*"?(-?\d[\d,]*(?:\.\d+)?)"?"""),
             Regex(""""priceChange"\s*:\s*"?(-?\d[\d,]*(?:\.\d+)?)"?"""),
-            Regex(""""regularMarketChange"\s*:\s*"?(-?\d[\d,]*(?:\.\d+)?)"?""")
+            Regex(""""regularMarketChange"\s*:\s*"?(-?\d[\d,]*(?:\.\d+)?)"?"""),
+            Regex("""Current Shiller PE Ratio:\s*-?\d[\d,]*(?:\.\d+)?\s+([+-]\d[\d,]*(?:\.\d+)?)""", RegexOption.IGNORE_CASE)
         ).firstNotNullOfOrNull { pattern ->
             pattern.find(html)?.groupValues?.getOrNull(1)?.stripHtml()?.toMarketDouble()
         }
@@ -153,7 +158,8 @@ class FengFinanceRepository(context: Context) {
             Regex(""""change_pct"\s*:\s*"?(-?\d[\d,]*(?:\.\d+)?)"?"""),
             Regex(""""changePercent"\s*:\s*"?(-?\d[\d,]*(?:\.\d+)?)"?"""),
             Regex(""""percentChange"\s*:\s*"?(-?\d[\d,]*(?:\.\d+)?)"?"""),
-            Regex(""""regularMarketChangePercent"\s*:\s*"?(-?\d[\d,]*(?:\.\d+)?)"?""")
+            Regex(""""regularMarketChangePercent"\s*:\s*"?(-?\d[\d,]*(?:\.\d+)?)"?"""),
+            Regex("""Current Shiller PE Ratio:\s*-?\d[\d,]*(?:\.\d+)?\s+[+-]\d[\d,]*(?:\.\d+)?\s*\(([+-]?\d[\d,]*(?:\.\d+)?)%?\)""", RegexOption.IGNORE_CASE)
         ).firstNotNullOfOrNull { pattern ->
             pattern.find(html)?.groupValues?.getOrNull(1)?.stripHtml()?.toMarketDouble()
         }
@@ -248,10 +254,13 @@ class FengFinanceRepository(context: Context) {
         private const val TAG = "FengFinanceRepository"
         private const val PREFS_NAME = "feng_finance"
         private const val QUOTES_KEY = "quotes"
+        const val SHILLER_PE_SYMBOL = "SHILLER_PE"
+        const val SHILLER_PE_HISTORIC_MAX = 44.19
 
         val INSTRUMENTS = listOf(
             FengFinanceInstrument("加權指數", "^TWII", "https://tw.stock.yahoo.com/s/tse.php"),
             FengFinanceInstrument("台積電", "2330.TW", "https://tw.stock.yahoo.com/quote/2330.TW"),
+            FengFinanceInstrument("Shiller PE Ratio", SHILLER_PE_SYMBOL, "https://www.multpl.com/shiller-pe"),
             FengFinanceInstrument("Nikkei 225 Index", ".N225", "https://www.cnbc.com/quotes/.N225"),
             FengFinanceInstrument("KOSPI Index", ".KS11", "https://www.cnbc.com/quotes/.KS11?qsearchterm=kospi"),
             FengFinanceInstrument("ICE Brent Crude", "@LCO.1", "https://www.cnbc.com/quotes/@LCO.1"),

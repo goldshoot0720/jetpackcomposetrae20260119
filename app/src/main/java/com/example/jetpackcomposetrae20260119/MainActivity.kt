@@ -94,6 +94,8 @@ import com.example.jetpackcomposetrae20260119.ui.theme.Porcelain
 import com.example.jetpackcomposetrae20260119.ui.theme.Slate
 import com.example.jetpackcomposetrae20260119.worker.NotificationWorker
 import com.example.jetpackcomposetrae20260119.worker.WorkerScheduler
+import com.example.jetpackcomposetrae20260119.data.FengFinanceQuote
+import com.example.jetpackcomposetrae20260119.data.FengFinanceRepository
 import com.example.jetpackcomposetrae20260119.data.FengTubeVideo
 import com.example.jetpackcomposetrae20260119.data.FengTubeRepository
 import com.example.jetpackcomposetrae20260119.ui.FengTubeViewModel
@@ -192,6 +194,7 @@ private fun HomeScreen(
     val birthdayEasterEgg = rememberBirthdayEasterEgg(today)
     val sleepReminder = calculateSleepReminder(now)
     val recentTubeVideos by fengTubeViewModel.recentVideos.collectAsState()
+    val financeQuotes by fengFinanceViewModel.quotes.collectAsState()
 
     val tabs = listOf(
         HomeTab("電池選單", "Battery", Icons.Default.DateRange),
@@ -225,7 +228,8 @@ private fun HomeScreen(
                     onTabSelected = { selectedTab = it },
                     birthdayEasterEgg = birthdayEasterEgg,
                     sleepReminder = sleepReminder,
-                    recentTubeVideos = recentTubeVideos
+                    recentTubeVideos = recentTubeVideos,
+                    financeQuotes = financeQuotes
                 )
             }
 
@@ -273,7 +277,8 @@ private fun LazyListScope.homeHeaderSection(
     onTabSelected: (Int) -> Unit,
     birthdayEasterEgg: BirthdayEasterEgg?,
     sleepReminder: SleepReminder?,
-    recentTubeVideos: List<FengTubeVideo>
+    recentTubeVideos: List<FengTubeVideo>,
+    financeQuotes: List<FengFinanceQuote>
 ) {
     if (sleepReminder != null) {
         item {
@@ -327,6 +332,21 @@ private fun LazyListScope.homeHeaderSection(
     if (recentTubeVideos.isNotEmpty()) {
         item {
             FengTubeNotificationCard(recentTubeVideos)
+        }
+
+        item {
+            Spacer(modifier = Modifier.padding(top = 14.dp))
+        }
+    }
+
+    val shillerPeHigh = financeQuotes.firstOrNull { quote ->
+        quote.instrument.symbol == FengFinanceRepository.SHILLER_PE_SYMBOL &&
+            (quote.numericPrice ?: 0.0) > FengFinanceRepository.SHILLER_PE_HISTORIC_MAX
+    }
+
+    if (shillerPeHigh != null) {
+        item {
+            ShillerPeHighNotificationCard(shillerPeHigh)
         }
 
         item {
@@ -444,6 +464,36 @@ private fun FengTubeNotificationCard(videos: List<FengTubeVideo>) {
                     color = Slate
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun ShillerPeHighNotificationCard(quote: FengFinanceQuote) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = Color(0xFFFFE7E7)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Shiller PE 創新高提醒",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color(0xFFB91C1C)
+            )
+            Text(
+                text = "目前 ${quote.priceLabel}，已高於歷史 Max ${FengFinanceRepository.SHILLER_PE_HISTORIC_MAX}（Dec 1999）。",
+                style = MaterialTheme.typography.headlineSmall,
+                color = Midnight
+            )
+            Text(
+                text = "請到鋒兄工具的鋒兄金融查看來源與更新時間。",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Slate
+            )
         }
     }
 }

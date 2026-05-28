@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 
 object WorkerScheduler {
     fun scheduleDailyCheck(context: Context) {
-        val initialDelay = computeInitialDelay(LocalTime.of(6, 0))
+        val initialDelay = computeInitialDelay(LocalTime.of(5, 19))
         val workRequest = PeriodicWorkRequestBuilder<NotificationWorker>(24, TimeUnit.HOURS)
             .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
             .build()
